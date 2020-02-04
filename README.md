@@ -40,6 +40,6 @@ La documentación se está realizando [aquí](https://www.overleaf.com/791842283
 
 ## Autores
 
-[Xabier Lahuerta Vázquez](https://github.com/Xabilahu)
-[Daniel Cañadillas Patricio](https://github.com/kaecius)
-[Ainhoa Serrano Guerrero](https://github.com/sgainhoa)
+- [Xabier Lahuerta Vázquez](https://github.com/Xabilahu)
+- [Daniel Cañadillas Patricio](https://github.com/kaecius)
+- [Ainhoa Serrano Guerrero](https://github.com/sgainhoa)
