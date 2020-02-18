@@ -1,5 +1,5 @@
 ; (load Puzzle-NxN.clp)
-; (BM (create$ 3 5 9 6 2 16 1 4 7 8 10 11 12 13 14 15) anchura h-puzzle min TRUE)
+; (BM (create$ 3 5 9 6 2 16 1 4 7 8 10 11 12 13 14 15 cop) anchura h-puzzle min TRUE)
 
 (defglobal
     ?*ESTADO-INICIAL* = (create$)
@@ -8,6 +8,7 @@
     ?*LISTA-F* = (create$)
     ?*LISTA-OPERADORES* = (create$)
     ?*DIMENSION* = 4
+    ?*DIRECCION* = nil
     ?*SIMBOLO-HUECO* = 0
     ?*OPERADORES* = (create$ S E N O)
     ?*SECUENCIA-OPERADORES* = (create$)
@@ -15,6 +16,7 @@
     ?*FUNCION-H* = nil
     ?*CON-PROHIBIDO* = TRUE
     ?*CON-VISITADOS* = TRUE
+    ?*GRAPH-FILE* = graph.gv
 )
 
 (deffunction modulo (?x $?y)
@@ -24,6 +26,10 @@
 
 (deffunction posicion-hueca ($?estado)
     (member$ ?*SIMBOLO-HUECO* ?estado)
+)
+
+(deffunction extrae-puzzle ($?estado)
+    (subseq$ $?estado 1 (- (member$ cop $?estado) 1))
 )
 
 (deffunction N ($?estado)
@@ -82,15 +88,19 @@
 
 (deffunction hijos($?estado)
 	(bind $?lista-hijos (create$))
+    (bind $?costes (create$))
 	(progn$ (?op ?*OPERADORES*) 
-		(bind ?hijo (aplicar-operador ?op ?estado))
+		(bind ?hijo (aplicar-operador ?op (extrae-puzzle ?estado)))
 		(if (and (not (prohibido? ?hijo)) (and ?*CON-VISITADOS* (not (member$ (implode$ ?hijo) ?*VISITADOS*)))) then 
-			(bind ?lista-hijos (create$ ?lista-hijos (implode$  ?hijo)))
-            (bind ?*LISTA-F* (create$ ?*LISTA-F* (funcall ?*FUNCION-H* ?hijo)))
+			(bind ?lista-hijos (create$ ?lista-hijos (implode$  (create$ ?hijo (subseq$ $?estado (member$ cop $?estado) (length$ $?estado)) ?op))))
+            (bind ?costes (create$ ?costes (funcall ?*FUNCION-H* ?hijo)))
             (bind ?*VISITADOS* (create$ ?*VISITADOS* (implode$ ?hijo)))
-            (bind ?*LISTA-OPERADORES* (create$ ?*LISTA-OPERADORES* ?op))
 		)
 	)
+    (if (eq ?*DIRECCION* anchura)
+        then (bind ?*LISTA-F* (create$ ?*LISTA-F* ?costes))
+        else (bind ?*LISTA-F* (create$ ?costes ?*LISTA-F*))
+    )
 	?lista-hijos
 )
 
@@ -129,45 +139,92 @@
     ?distance
 )
 
+(deffunction state-to-str ($?estado)
+    (bind ?res "n")
+    (bind ?table "<<table border=\"0\" cellborder=\"1\" cellspacing=\"0\">")
+    (loop-for-count (?i 1 ?*DIMENSION*)
+        (bind ?table (str-cat ?table "<tr>"))
+        (loop-for-count (?j 1 ?*DIMENSION*)
+            (bind ?number (nth (+ (* (- ?i 1) ?*DIMENSION*) ?j) ?estado))
+            (if (eq ?number ?*SIMBOLO-HUECO*)
+                then (bind ?number "X")
+                     (bind ?table (str-cat ?table "<td><font color=\"red\">" ?number "</font></td>"))
+                else (bind ?table (str-cat ?table "<td>" ?number "</td>"))
+            )
+            (bind ?res (str-cat ?res ?number "_"))
+        )
+        (bind ?table (str-cat ?table "</tr>"))
+    )
+    (bind ?res (sub-string 1 (- (str-length ?res) 1) ?res))
+    (bind ?table (str-cat ?table "</table>>"))
+    (create$ ?res ?table)
+)
+
 (deffunction BM (?edo-inicial ?direccion ?funcion ?optimizador $?visitados)
+    (printout t "Introduzca el nombre del fichero en el que se escribirá el árbol: ")
+	(bind ?file (read))
+	(open ?file ?*GRAPH-FILE* "a")
+	(printout ?*GRAPH-FILE* "digraph G {" crlf)
     (bind ?*ESTADO-INICIAL* ?edo-inicial)
-    (bind ?*FUNCION-H* ?funcion)
-    (bind ?*SIMBOLO-HUECO* (length$ ?edo-inicial))
-    (bind ?*DIMENSION* (integer (sqrt (length$ ?*ESTADO-INICIAL*))))
-    (bind ?*LISTA* (create$ (implode$ ?*ESTADO-INICIAL*)))
-    (bind ?*LISTA-F* (create$ (funcall ?*FUNCION-H* ?*ESTADO-INICIAL*)))
     (bind ?*PADRE* ?*ESTADO-INICIAL*)
+    (bind ?*FUNCION-H* ?funcion)
+    (bind ?*SIMBOLO-HUECO* (length$ (extrae-puzzle ?*ESTADO-INICIAL*)))
+    (bind ?*DIMENSION* (integer (sqrt ?*SIMBOLO-HUECO*)))
+    (bind ?*LISTA* (create$ (implode$ ?*ESTADO-INICIAL*)))
+    (bind ?*LISTA-F* (create$ (funcall ?*FUNCION-H* (extrae-puzzle ?*ESTADO-INICIAL*))))
     (bind ?*CON-VISITADOS* (nth 1 $?visitados))
-    (bind ?*VISITADOS* (create$ (implode$ ?*ESTADO-INICIAL*)))
-    (if (eq (length$ ?*ESTADO-INICIAL*) (* ?*DIMENSION* ?*DIMENSION*))
-        then (bind ?i 0)  ; Board dimensions are OK
-             (while (and(not (exito ?*PADRE*)) (not (eq ?*LISTA* (create$)))) do
-                 (printout t "Paso " ?i crlf)
+    (bind ?*DIRECCION* ?direccion)
+    (bind ?*VISITADOS* (create$ (implode$ (extrae-puzzle ?*ESTADO-INICIAL*))))
+    (bind ?best-solution (create$))
+    (bind ?padre-str (state-to-str ?*PADRE*))
+	(format ?*GRAPH-FILE* "    n0 [label=\"\", shape=none, height=.0, width=.0];%n    n0 -> %s;%n" (nth 1 ?padre-str))
+    (if (eq (length$ (extrae-puzzle ?*ESTADO-INICIAL*)) (* ?*DIMENSION* ?*DIMENSION*))
+        then (bind ?i 1)  ; Board dimensions are OK
+             (while (not (eq ?*LISTA* (create$))) do
                  (if (eq (length$ ?*LISTA-F*) 1) ; min and max functions expect at least 2 arguments
                     then (bind ?next-father 1)
                     else (bind ?next-father (eval (format nil "(member$ (%s %s) ?*LISTA-F*)" ?optimizador (implode$ ?*LISTA-F*))))
                  )
                  (bind ?*PADRE* (explode$ (nth ?next-father ?*LISTA*)))
-                 (bind ?*SECUENCIA-OPERADORES* (create$ ?*SECUENCIA-OPERADORES* (nth ?next-father ?*LISTA-OPERADORES*)))
-                 (printout t "Padre " ?*PADRE* crlf)
                  (bind ?*LISTA* (create$ (subseq$ ?*LISTA* 1 (- ?next-father 1)) (subseq$ ?*LISTA* (+ ?next-father 1) (length$ ?*LISTA*))))
                  (bind ?*LISTA-F* (create$ (subseq$ ?*LISTA-F* 1 (- ?next-father 1)) (subseq$ ?*LISTA-F* (+ ?next-father 1) (length$ ?*LISTA-F*))))
-                 (bind ?*LISTA-OPERADORES* (create$ (subseq$ ?*LISTA-OPERADORES* 1 (- ?next-father 1)) (subseq$ ?*LISTA-OPERADORES* (+ ?next-father 1) (length$ ?*LISTA-OPERADORES*))))
-                 (if (not (exito ?*PADRE*)) 
+                 (bind ?padre-str (state-to-str ?*PADRE*))
+                 
+                 (if (eq ?i 1) 
+                    then (format ?*GRAPH-FILE* "    %s [fillcolor=yellow, style=filled, shape=none, label=%s];%n" (nth 1 ?padre-str) (nth 2 ?padre-str))
+                 )
+
+                 (if (eq (modulo ?i 200) 0) then (printout t "Paso " ?i ": " ?*PADRE* crlf))
+
+                 (if (not (exito (extrae-puzzle ?*PADRE*))) 
                     then (bind ?hijos (hijos ?*PADRE*))
+                         (progn$ (?h ?hijos)
+                            (bind ?h-str (state-to-str (extrae-puzzle (explode$ ?h))))
+                            (format ?*GRAPH-FILE* "    %s [shape=none, label=%s];%n" (nth 1 ?h-str) (nth 2 ?h-str))
+                            (format ?*GRAPH-FILE* "    %s -> %s [label=\"%s\"];%n" (nth 1 ?padre-str) (nth 1 ?h-str) (nth (length$ (explode$ ?h)) (explode$ ?h)))
+                         )
                          (if (eq ?direccion profundidad)
                              then (bind ?*LISTA* (create$ ?hijos ?*LISTA*))
                              else (bind ?*LISTA* (create$ ?*LISTA* ?hijos))
                          )
-                    else (break)
+                    else (if (< (length$ ?*PADRE*) (length$ ?best-solution))
+                            then (format ?*GRAPH-FILE* "    %s [fillcolor=aquamarine, style=filled];%n" (nth 1 (state-to-str (extrae-puzzle ?*PADRE*))))
+                                 (bind ?best-solution ?*PADRE*)
+                            else (if (eq ?best-solution (create$))
+                                     then (bind ?best-solution ?*PADRE*)
+                                 )
+                         )
                  )
                  (bind ?i (+ ?i 1))
              )
  
-             (if  (exito ?*PADRE*) 
-                 then (printout t "La solución es: " ?*SECUENCIA-OPERADORES* crlf)
+             (if  (exito (extrae-puzzle ?best-solution))
+                 then (printout t "La solución es: " (subseq$ ?best-solution (+ (member$ cop ?best-solution) 1) (length$ ?best-solution)) crlf)
+                      (format ?*GRAPH-FILE* "    %s [fillcolor=green, style=filled];%n" (nth 1 (state-to-str ?best-solution)))
                  else (if (=(length$ ?*LISTA*)0)  then (printout t "No hay solución" crlf))
              )
         else (printout t "Dimensión del tablero incorrecta." crlf)
     )
+    (printout ?*GRAPH-FILE* } crlf)
+    (close ?*GRAPH-FILE*)
 )
