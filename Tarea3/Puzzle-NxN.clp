@@ -18,7 +18,7 @@
 ;guardar raiz n?
 
 
-
+;intercambia el hueco y el elemento dado en la posición dentro del estado
 (deffunction swap-hueco-ficha (?posicion-hueco ?posicion-ficha $?estado)
     (bind ?ficha (nth ?posicion-ficha ?estado))
     (bind ?estado (replace$ ?estado ?posicion-hueco ?posicion-hueco ?ficha))
@@ -104,10 +104,6 @@
     (- (length$ (extrae-cop ?estado)) 1)
 )
 
-(deffunction ordenar-f (?f ?puzzle1 ?puzzle2)
-    (> (funcall ?f ?puzzle1) (funcall ?f ?puzzle2))
-)
-
 (deffunction prohibido? ($?estado)
   	(eq $?estado (create$ PROHIBIDO))
 )
@@ -115,7 +111,6 @@
 (deffunction exito? ($?estado)
     (eval (format nil "(< %s)" (implode$ (extrae-estado ?estado ))))
 )
-
 
 (deffunction operadores-hijos($?estado)
 	(bind $?lista-operadores (create$))
@@ -129,13 +124,9 @@
 
 (deffunction hijos($?estado)
 	(bind $?lista-hijos (create$))
-    ;(printout t "bind" crlf)
 	(progn$ (?op ?*OPERADORES*)
-        ;(printout t "progn" crlf) 
 		(bind ?hijo (aplicar-operador ?op ?estado))
-        ;(printout t "bind hijo aplicar operador: " ?hijo crlf)
 		(if (not (prohibido? ?hijo)) then
-            ;(printout t "no prohibido" crlf)
             (if (eq ?*CON-VISITADOS* TRUE)
                 then
                     (if (not (member$ ?hijo ?*VISITADOS*))
@@ -164,24 +155,18 @@
     (bind ?i 0)
 
 	(while (not (eq ?*LISTA* (create$))) do
-		;(printout t "Paso " ?i crlf)
+        (printout t "Paso " ?i crlf)
 		(bind ?*PADRE*  (explode$(nth$ 1 ?*LISTA*)))
-		;(printout t "Padre " ?*PADRE* crlf)
 		(bind ?*LISTA*(rest$ ?*LISTA*))
-        ;(printout t "LISTA:" ?*LISTA* crlf)
 		(if (not (exito? ?*PADRE*)) 
             then 
-                ;(printout t "hijos")
                 (bind ?hijos (hijos ?*PADRE*))
-                ;(printout t "HIJOS SIN ORDENAR:" ?hijos crlf)
                 (if (eq ?direccion anchura)
                     then (bind ?*LISTA* (create$ ?*LISTA* ?hijos))   
                     else (bind ?*LISTA* (create$ ?hijos ?*LISTA*))  
                 )
-                (bind ?hijos (sort ?f ?hijos))
-                ;(printout t "HIJOS ORDENADOS:" ?hijos crlf)
+                (bind ?hijos (sort ?f ?hijos)) ;ordena los hijos en funcion de f
             else
-                (printout t "Paso " ?i crlf)
                 (printout t "Solución intermedia encontrada" crlf)
                 (printout t "Padre " ?*PADRE* crlf)
                 (bind ?num-operadores (cantidad-operadores ?*PADRE*))
@@ -208,3 +193,4 @@
 )
 ;(load Puzzle-NxN.clp)
 ; (BM (create$ 3 9 4 5 8 7 2 1 6) anchura h min TRUE)
+;  (BM (create$ 1 2 3 4 5 6 7 9 8) anchura h min TRUE)
