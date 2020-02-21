@@ -155,7 +155,7 @@
     (bind ?i 0)
 
 	(while (not (eq ?*LISTA* (create$))) do
-        (printout t "Paso " ?i crlf)
+        ;(printout t "Paso " ?i crlf)
 		(bind ?*PADRE*  (explode$(nth$ 1 ?*LISTA*)))
 		(bind ?*LISTA*(rest$ ?*LISTA*))
 		(if (not (exito? ?*PADRE*)) 
@@ -167,6 +167,7 @@
                 )
                 (bind ?hijos (sort ?f ?hijos)) ;ordena los hijos en funcion de f
             else
+                (printout t "Paso " ?i crlf)
                 (printout t "Solución intermedia encontrada" crlf)
                 (printout t "Padre " ?*PADRE* crlf)
                 (bind ?num-operadores (cantidad-operadores ?*PADRE*))
