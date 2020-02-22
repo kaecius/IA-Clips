@@ -11,7 +11,6 @@
     ?*DIRECCION* = nil
     ?*SIMBOLO-HUECO* = 0
     ?*OPERADORES* = (create$ S E N O)
-    ?*SECUENCIA-OPERADORES* = (create$)
     ?*VISITADOS* = (create$)
     ?*FUNCION-H* = nil
     ?*CON-PROHIBIDO* = TRUE
@@ -91,10 +90,12 @@
     (bind $?costes (create$))
 	(progn$ (?op ?*OPERADORES*) 
 		(bind ?hijo (aplicar-operador ?op (extrae-puzzle ?estado)))
-		(if (and (not (prohibido? ?hijo)) (and ?*CON-VISITADOS* (not (member$ (implode$ ?hijo) ?*VISITADOS*)))) then 
+		(if (and (not (prohibido? ?hijo)) (or (not ?*CON-VISITADOS*) (and ?*CON-VISITADOS* (not (member$ (implode$ ?hijo) ?*VISITADOS*))))) then 
 			(bind ?lista-hijos (create$ ?lista-hijos (implode$  (create$ ?hijo (subseq$ $?estado (member$ cop $?estado) (length$ $?estado)) ?op))))
             (bind ?costes (create$ ?costes (funcall ?*FUNCION-H* ?hijo)))
-            (bind ?*VISITADOS* (create$ ?*VISITADOS* (implode$ ?hijo)))
+            (if (and (not (exito ?hijo) ?*CON-VISITADOS*) ; Múltiples estados pueden desembocar en éxito
+                then (bind ?*VISITADOS* (create$ ?*VISITADOS* (implode$ ?hijo)))
+            )
 		)
 	)
     (if (eq ?*DIRECCION* anchura)
@@ -214,6 +215,7 @@
                                      then (bind ?best-solution ?*PADRE*)
                                  )
                          )
+                         (format t "%nSOLUCIÓN PARCIAL: %s%n" (implode$ ?best-solution))
                  )
                  (bind ?i (+ ?i 1))
              )

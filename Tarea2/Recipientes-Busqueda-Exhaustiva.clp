@@ -12,8 +12,10 @@
 	?*OPERADORES* = (create$ llenar-x llenar-y volcar-x-y volcar-y-x tirar-x tirar-y)
 	?*LISTA* = (create$   (implode$ ?*ESTADO-INICIAL*))
 	?*PADRE* = ?*ESTADO-INICIAL*
-	?*PASOS* = 200 ;indica que no hay límite en el número de pasos
+	?*PASOS* = 0 ;indica que no hay límite en el número de pasos
 	?*CON-PROHIBIDO* = TRUE
+	?*CON-VISITADOS* = TRUE
+	?*VISITADOS* = (create$ ?*ESTADO-INICIAL*)
 )
 
 (deffunction cantidad-x ($?estado)
@@ -47,7 +49,6 @@
 		)
 	)
 )
-
 
 ;PROHIBIDO: LLenar y si ya esta lleno
 (deffunction llenar-y ($?estado)
@@ -94,7 +95,6 @@
 	)
 )
 
-
 (deffunction volcar-y-x ($?estado)
 	(if (eq ?estado PROHIBIDO) 
 		then PROHIBIDO
@@ -118,7 +118,6 @@
 		)
 	)
 )
-
 
 (deffunction tirar-x(?estado)
 	(if (eq ?estado PROHIBIDO) 
@@ -145,8 +144,7 @@
 					(create$ ?nvo (extrae-cop ?estado) tirar-y)
 			)
 	)
-)
-				
+)			
 
 (deffunction prohibido? ($?estado)
   	(eq $?estado (create$ PROHIBIDO))
@@ -165,30 +163,17 @@
 	(funcall  ?operador $?estado)
 )
 
-;;;La misma función aplicar operador implementada de otra forma
-;;(deffunction aplicar-operador (?operador $?estado)
-;;(eval
-;;(format nil "( %s (create$ %s))" ?operador (implode$ ?estado))
-;;)
-;;)
-
-
-(deffunction operadores-hijos($?estado)
-	(bind $?lista-operadores (create$))
-	(progn$ (?op ?*OPERADORES*) 
-		(bind $?hijo (aplicar-operador ?op ?estado))
-		(if (not (prohibido? ?hijo)) then 
-			(bind ?lista-operadores (create$ ?lista-operadores ?op)))
-	)
-	?lista-operadores
-)
-
 (deffunction hijos($?estado)
 	(bind $?lista-hijos (create$))
 	(progn$ (?op ?*OPERADORES*) 
 		(bind ?hijo (aplicar-operador ?op ?estado))
-		(if (not (prohibido? ?hijo)) then 
+		; Se añaden los hijos siempre que:
+		; 1 -> No sean prohibidos
+		; 2 -> Bien no haya visitados
+		;      Bien haya visitados, pero el hijo no haya sido visitado
+		(if (and (not (prohibido? ?hijo)) (or (not ?*CON-VISITADOS*) (and ?*CON-VISITADOS* (not (member$ (implode$ (estado-actual ?hijo)) ?*VISITADOS*))))) then 
 			(bind ?lista-hijos (create$ ?lista-hijos (implode$  ?hijo)))
+			(if ?*CON-VISITADOS* then (bind ?*VISITADOS* (create$ ?*VISITADOS* (implode$ (estado-actual ?hijo)))))
 		)
 	)
 	?lista-hijos
@@ -196,13 +181,12 @@
 
 (deffunction busqueda-en-profundidad ($?lista)
 	(bind ?i 0)
-	(while (and(not (exito ?*PADRE*)) (not (eq ?*LISTA* (create$)))) do
+	(while (and (not (exito ?*PADRE*)) (not (eq ?*LISTA* (create$)))) do
 		(printout t "Paso " ?i crlf)
 		(bind ?*PADRE*  (explode$(nth$ 1  ?*LISTA*)))
 		(printout t "Padre " ?*PADRE* crlf)
 		(bind ?*LISTA*(rest$ ?*LISTA*))
-		(if (not (exito ?*PADRE*)) then 
-			(bind ?operadores-hijos (operadores-hijos ?*PADRE*))
+		(if (not (exito ?*PADRE*)) then
 			(bind ?hijos (hijos ?*PADRE*))
 			(bind ?*LISTA* (create$ ?hijos ?*LISTA*)))
 		(bind ?i (+ ?i 1))
@@ -222,8 +206,7 @@
 		(bind ?*PADRE*  (explode$(nth$ 1 ?*LISTA*)))
 		(printout t "Padre " ?*PADRE* crlf)
 		(bind ?*LISTA*(rest$ ?*LISTA*))
-		(if (not (exito ?*PADRE*)) then 
-			(bind ?operadores-hijos (operadores-hijos ?*PADRE*))
+		(if (not (exito ?*PADRE*)) then
 			(bind ?hijos (hijos ?*PADRE*))
 			(bind ?*LISTA* (create$ ?*LISTA* ?hijos)))
 		(bind ?i (+ ?i 1))

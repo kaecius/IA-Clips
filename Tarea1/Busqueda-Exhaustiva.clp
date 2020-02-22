@@ -6,8 +6,10 @@
  	?*LISTA-DE-OPERADORES* = (create$)
  	?*VISITADOS* = (create$)
  	?*PASOS* = 10
-	?*GRAPH-FILE* = graph.gv
+	?*GRAPH-FILE* = graph.dot
 	?*CON-PROHIBIDO* = TRUE
+	?*CON-VISITADOS* = TRUE
+	?*VISITADOS* = (create$ ?*ESTADO-INICIAL*)
 )
 
 ;Crea una transicion de estado padre a estado hijo con el operador en formato graphviz
@@ -139,25 +141,16 @@
 	)
 )
 
-; Devuelve la lista con todos los operadores que se pueden aplicar en el estado $?estado
-; En caso de que ?*CON-PROHIBIDO* sea FALSE, esta función devuelve todos los operadores
-(deffunction operadores-hijos($?estado)
-	(bind $?lista-operadores (create$))
-	(progn$ (?op ?*OPERADORES*) 
-		(bind $?hijo (aplicar-operador ?op ?estado))
-		(if (not (prohibido? ?hijo)) 
-			then (bind ?lista-operadores (create$ ?lista-operadores ?op))))
-	?lista-operadores)
-
 ; Devuelve la lista de hijos tras aplicar todos los operadores
 ; Además rellena ?*LISTA-DE-OPERADORES* con los operadores que se han ido aplicando
 (deffunction hijos($?estado)
 	(bind $?lista-hijos (create$))
 	(progn$ (?op ?*OPERADORES*) 
 		(bind $?hijo (aplicar-operador ?op ?estado))
-		(if (not (prohibido? ?hijo)) 
+		(if (and (not (prohibido? ?hijo)) (or (not ?*CON-VISITADOS*) (and ?*CON-VISITADOS* (not (member$ (implode$ ?hijo) ?*VISITADOS*))))) 
 			then (bind ?lista-hijos (create$ ?lista-hijos (implode$ ?hijo)))
 				 (bind ?*LISTA-DE-OPERADORES* (create$ ?*LISTA-DE-OPERADORES* ?op))
+				 (if ?*CON-VISITADOS* then (bind ?*VISITADOS* (create$ ?*VISITADOS* (implode$ ?hijo))))
 		)
 	)
 	;si la ultima instruccion a ejecutar es el if sin entrar, devuelve un false y no la lista de hijos
@@ -172,7 +165,6 @@
 		(printout t "Padre " ?*PADRE* crlf)
 		(bind ?*LISTA*(rest$ ?*LISTA*))
 		(if (not (exito ?*PADRE*)) then 
-			(bind ?operadores-hijos (operadores-hijos ?*PADRE*))
 			(bind ?hijos (hijos ?*PADRE*))
 			(bind ?*LISTA* (create$ ?hijos ?*LISTA*)))
 		(bind ?i (+ ?i 1))
@@ -193,7 +185,6 @@
 		(printout t "Padre " ?*PADRE* crlf)
 		(bind ?*LISTA*(rest$ ?*LISTA*))
 		(if (not (exito ?*PADRE*)) then 
-			(bind ?operadores-hijos (operadores-hijos ?*PADRE*))
 			(bind ?hijos (hijos ?*PADRE*))
 			(bind ?*LISTA* (create$ ?*LISTA* ?hijos)))
 		(bind ?i (+ ?i 1))
@@ -221,7 +212,6 @@
 		(printout t "Padre " ?*PADRE* crlf)
 		(bind ?*LISTA*(rest$ ?*LISTA*))
 		(if (not (exito ?*PADRE*)) then 
-			(bind ?operadores-hijos (operadores-hijos ?*PADRE*))
 			(bind ?hijos (hijos ?*PADRE*))
 			(loop-for-count (?j 1 (length$ ?hijos)) ; Se recorren los hijos para ir imprimiendolos en el fichero
 				(bind ?hijo (nth ?j ?hijos))
