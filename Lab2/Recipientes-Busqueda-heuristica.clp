@@ -181,7 +181,6 @@
 (deffunction h ($?estado) (h-examen ?estado))
 (deffunction f ($?estado) (+(g ?estado) (h ?estado)))
 
-
 ;;;;;;;;;;;B�squeda guiada por informaci�n, funciones auxiliares
 
 ;;;la lista  ?*VALORES-f* contiene los valores f=g+h de cada estado de ?*LISTA
@@ -196,7 +195,6 @@
 )
 ?resultado-funcion)
 
-
 ;;;;***************** funciones de b�squeda
 ;
 (deffunction aplicar-operador (?operador $?estado)
@@ -209,8 +207,6 @@
 ;;(format nil "( %s (create$ %s))" ?operador (implode$ ?estado))
 ;;)
 ;;)
-
-
 
 (deffunction operadores-hijos($?estado)
 (bind $?lista-operadores (create$))
@@ -250,15 +246,14 @@
 
 ;;;;;;;;;;;***********BUSQUEDA INFORMADA*****************
 
-(deffunction busqueda_informada_con_visitados ($?lista)
+(deffunction busqueda_informada_con_visitados (?g ?h $?save_exec)
 (bind ?i 1)
 (while (and (not (= ?*PASOS* ?i))   (not (exito ?*PADRE*)) (not (eq ?*LISTA* (create$)))) do
 	
 ;contador de n�mero de pasos
 (printout t "Paso " ?i crlf)
 
-   (while (member$  ?*ULTIMO-ESTADO* ?*VISITADOS*) 
-
+   (while (member$ ?*ULTIMO-ESTADO* ?*VISITADOS*) 
 ;borrar el padre de la posici�n ?*POSMIN* y los valores de esa posici�n en todas las listas
 	(bind ?*LISTA*(delete$ ?*LISTA* ?*POSMIN* ?*POSMIN*))
 	(bind ?*VALORES-f*(delete$ ?*VALORES-f* ?*POSMIN* ?*POSMIN*))
@@ -290,17 +285,14 @@
 				" f=g+h= " ?*MIN* crlf)
 				
 ;Borramos ahora el padre no visitado y los valores f=g+h
-	(bind ?*LISTA* (delete$ ?*LISTA* ?*POSMIN* ?*POSMIN*))
-	(bind ?*VALORES-f*(delete$ ?*VALORES-f* ?*POSMIN* ?*POSMIN*))
-	(bind ?*VALORES-g*(delete$ ?*VALORES-g* ?*POSMIN* ?*POSMIN*))
-	(bind ?*VALORES-h*(delete$ ?*VALORES-h* ?*POSMIN* ?*POSMIN*))
 ;Incluimos sus hijos y los valores f=g+h en las correspondientes listas, en profundidad
 	(if (not (exito ?*PADRE*)) then
 	        (bind ?hijos (hijos ?*PADRE*))
 			(bind ?*LISTA* (create$ ?hijos ?*LISTA*))
-			(bind ?*VALORES-g* (create$(valores-funcion-lista g ?hijos) ?*VALORES-g*))
-			(bind ?*VALORES-h* (create$(valores-funcion-lista h ?hijos) ?*VALORES-h*))
-			(bind ?*VALORES-f* (create$(valores-funcion-lista f ?hijos) ?*VALORES-f*))
+			(bind ?*POSMIN* (+ ?*POSMIN* (length$ ?hijos))) ; por ser profundidad, al añadir en modo pila se debe sumar a posmin la cantidad de los elementos añadidos
+			(bind ?*VALORES-g* (create$ (valores-funcion-lista g ?hijos) ?*VALORES-g*))
+			(bind ?*VALORES-h* (create$ (valores-funcion-lista h ?hijos) ?*VALORES-h*))
+			(bind ?*VALORES-f* (create$ (valores-funcion-lista f ?hijos) ?*VALORES-f*))
 ;incrementamos el contador
 (printout t " ?*VISITADOS*=" ?*VISITADOS* crlf)
 (printout t " ?*LISTA*=" ?*LISTA*  crlf )
@@ -312,4 +304,3 @@
 (if  (exito ?*PADRE*) then (printout t "La solución es " ?*PADRE* crlf)
 else (if (=(length$ ?*LISTA*)0)  then (printout t "No hay solución" crlf)))
 )
-

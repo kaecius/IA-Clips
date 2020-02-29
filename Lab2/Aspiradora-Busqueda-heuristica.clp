@@ -1,6 +1,3 @@
-;http://www.comp.rgu.ac.uk/staff/smc/teaching/clips/vol1/vol1-Contents.html
-
-
 (defglobal 
 ?*ESTADO-INICIAL* = (create$ h1 aspiradora sucia sucia  h2 sucia sucia sucia sucia cop )
  ?*OPERADORES* = (create$ A I D)
@@ -53,7 +50,6 @@
 	else ?habitacion)
 )
 
-
 (deffunction poner-aspiradora ($?habitacion)
 (if (member$ aspiradora ?habitacion) then ?habitacion
 else 
@@ -74,13 +70,11 @@ else
   (bind ?h2 (extrae-h2 ?estado))
 (and (habitacion-limpia? ?h1) (habitacion-limpia? ?h2)))
 
-
 (deffunction A ($?estado)
   (bind ?h1 (aspirar(extrae-h1 ?estado)))
   (bind ?h2 (aspirar(extrae-h2 ?estado)))
   (bind ?cop (extrae-cop ?estado))
   (create$ ?h1 ?h2 ?cop A))
-
 
 (deffunction I ($?estado)
   (bind ?h1 (poner-aspiradora(extrae-h1 ?estado)))
@@ -93,8 +87,6 @@ else
   (bind ?h2 (poner-aspiradora(extrae-h2 ?estado)))
   (bind ?cop (extrae-cop ?estado))
   (create$ ?h1 ?h2 ?cop D))
-
-
 
 (deffunction prohibido? ($?estado)
 (eq $?estado PROHIBIDO)
@@ -120,19 +112,16 @@ else
 ?n
 )
 
-
 (deffunction minimum ($?v)
 (if (=(length$ ?v) 1) then (nth$ 1 ?v) else 
 (eval(format nil "(min %s)" (implode$ ?v)))
 ))
-
 
 ;;costes
 
 (deffunction coste-1(?estado)
 (length$ (rest$(extrae-cop ?estado)))
 )
-
 
 ;;funcion constante cero
 
@@ -153,7 +142,6 @@ else
    ?*VALORES-h* = (create$ (h ?*ESTADO-INICIAL*))
 )
 
-
 (deffunction valores-funcion-lista (?funcion $?lista)
 (bind ?resultado-funcion (create$))
 (progn$ (?elemento ?lista) 
@@ -163,24 +151,12 @@ else
 )
 ?resultado-funcion)
 
-
-
-;;;***************** funciones de b�squeda
+;;;***************** funciones de búsqueda
 
 (deffunction aplicar-operador (?operador $?estado)
 (funcall  ?operador $?estado)
 )
-
-
-;(deffunction aplicar-operador (?operador $?estado)
-;(eval
-;(format nil "( %s (create$ %s))" ?operador (implode$ ?estado))
-;)
-;)
-
-
-
-
+ 
 (deffunction operadores-hijos($?estado)
 (bind $?lista-operadores (create$))
 (progn$ (?op ?*OPERADORES*) 
@@ -188,8 +164,6 @@ else
 	(if (not (prohibido? ?hijo)) then 
 		(bind ?lista-operadores (create$ ?lista-operadores ?op))))
 ?lista-operadores)
-
-
 
 (deffunction hijos($?estado)
 (bind $?lista-hijos (create$))
@@ -199,20 +173,13 @@ else
 		(bind ?lista-hijos (create$ ?lista-hijos (implode$  ?hijo))))
 ))
 
-
-
-
-
-
-
-
 (deffunction busqueda_informada (?lista)
 (bind ?i 1)
 (while (and (not (= ?*PASOS* ?i))   (not (exito ?*PADRE*)) (not (eq ?*LISTA* (create$)))) do
 	(printout t "Paso " ?i crlf)
 	(bind ?min (minimum ?*VALORES-f*))
 	(bind ?posmin (member$ ?min ?*VALORES-f*))
-	(bind ?*PADRE*  (explode$ (nth$ ?posmin  ?*LISTA*)))
+	(bind ?*PADRE*  (explode$ (nth$ ?posmin ?*LISTA*)))
 	(printout t "Padre= " ?*PADRE* crlf)
 	(printout t " g=" (nth ?posmin ?*VALORES-g*)
 				" h=" (nth ?posmin ?*VALORES-h*)
@@ -230,20 +197,6 @@ else
 	(bind ?i (+ ?i 1))
 )
 
-(if  (exito ?*PADRE*) then (printout t "La soluci�n es " ?*PADRE* crlf)
-else (if (=(length$ ?*LISTA*)0)  then (printout t "No hay soluci�n" crlf)))
+(if  (exito ?*PADRE*) then (printout t "La solución es " ?*PADRE* crlf)
+else (if (=(length$ ?*LISTA*)0)  then (printout t "No hay solución" crlf)))
 )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
