@@ -5,6 +5,17 @@
 ;cop es la abraviatura de "cadena de operadores" e indica que a continuación 
 ;se guarda la cadena de operadores que lleva desde el estado inicial al actual
 
+(deffunction extrae-cop ($?estado)
+	(bind ?posicion-cop (member$ cop ?estado))
+	(bind ?ultima (length$ ?estado))
+	(subseq$ ?estado  ?posicion-cop ?ultima)
+)
+
+(deffunction estado-actual ($?estado)
+	(bind ?posicion-cop (member$ cop ?estado))
+	(subseq$ ?estado 1 (- ?posicion-cop 1))
+)
+
 (defglobal 
 	?*TX* = 4
 	?*TY* = 3
@@ -15,7 +26,7 @@
 	?*PASOS* = 0 ;indica que no hay límite en el número de pasos
 	?*CON-PROHIBIDO* = TRUE
 	?*CON-VISITADOS* = TRUE
-	?*VISITADOS* = (create$ ?*ESTADO-INICIAL*)
+	?*VISITADOS* = (create$ (implode$ (estado-actual ?*ESTADO-INICIAL*)))
 )
 
 (deffunction cantidad-x ($?estado)
@@ -24,17 +35,6 @@
 
 (deffunction cantidad-y ($?estado)
 	(nth$ 2 ?estado)
-)
-
-(deffunction extrae-cop ($?estado)
-	(bind ?posicion-cop (member$ cop ?estado))
-	(bind ?ultima (length$ ?estado))
-	(subseq$ ?estado  ?posicion-cop ?ultima)
-)
-
-(deffunction estado-actual ($?estado)
-	(bind ?posicion-cop (member$ cop ?estado))
-	(subseq$ ?estado 1 (- ?posicion-cop 1))
 )
 
 ;PROHIBIDO: Llenar x si ya esta lleno

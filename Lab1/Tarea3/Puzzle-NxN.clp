@@ -93,7 +93,7 @@
 		(if (and (not (prohibido? ?hijo)) (or (not ?*CON-VISITADOS*) (and ?*CON-VISITADOS* (not (member$ (implode$ ?hijo) ?*VISITADOS*))))) then 
 			(bind ?lista-hijos (create$ ?lista-hijos (implode$  (create$ ?hijo (subseq$ $?estado (member$ cop $?estado) (length$ $?estado)) ?op))))
             (bind ?costes (create$ ?costes (funcall ?*FUNCION-H* ?hijo)))
-            (if (and (not (exito ?hijo) ?*CON-VISITADOS*) ; Múltiples estados pueden desembocar en éxito
+            (if (and (not (exito ?hijo)) ?*CON-VISITADOS*) ; Múltiples estados pueden desembocar en éxito
                 then (bind ?*VISITADOS* (create$ ?*VISITADOS* (implode$ ?hijo)))
             )
 		)
