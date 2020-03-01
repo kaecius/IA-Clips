@@ -165,6 +165,18 @@
 
 ;;;costes
 
+(defglobal
+	?*FUNCION-g* = ""
+	?*FUNCION-h* = ""
+	?*VALORES-f* = (create$)
+  	?*VALORES-g* = (create$)
+  	?*VALORES-h* = (create$)
+  	?*MIN* = nil
+  	?*POSMIN* = 1
+  	?*ULTIMO-ESTADO* = (implode$ (estado-actual ?*PADRE*))
+  	?*VISITADOS* = (create$)	
+)
+
 ;;Funci�n de coste uniforme 1 (longitud del camino)
 
 (deffunction coste-1(?estado)
@@ -177,9 +189,9 @@
 
 ;;;evaluaci�n de costes: definir funciones g, h y f=g+h, as� como las listas de valores 
 ;
-(deffunction g ($?estado) (coste-1 ?estado))
-(deffunction h ($?estado) (h-examen ?estado))
-(deffunction f ($?estado) (+(g ?estado) (h ?estado)))
+(deffunction g ($?estado) (eval (format nil ?*FUNCION-g* (nth 1 ?estado))))
+(deffunction h ($?estado) (eval (format nil ?*FUNCION-h* (nth 1 ?estado))))
+(deffunction f ($?estado) (+(g (nth 1 ?estado)) (h (nth 1 ?estado))))
 
 ;;;;;;;;;;;B�squeda guiada por informaci�n, funciones auxiliares
 
@@ -189,8 +201,8 @@
 (deffunction valores-funcion-lista (?funcion $?lista)
 (bind ?resultado-funcion (create$))
 (progn$ (?elemento ?lista) 
-	(bind ?estado (explode$ ?elemento))
-	(bind ?resultado-funcion (create$ ?resultado-funcion (funcall ?funcion ?estado)))
+	; (bind ?estado (explode$ ?elemento))
+	(bind ?resultado-funcion (create$ ?resultado-funcion (funcall ?funcion ?elemento)))
 
 )
 ?resultado-funcion)
@@ -198,7 +210,7 @@
 ;;;;***************** funciones de b�squeda
 ;
 (deffunction aplicar-operador (?operador $?estado)
-(funcall  ?operador $?estado)
+(funcall ?operador $?estado)
 )
 
 ;;;La misma funci�n aplicar operador implementada de otra forma
@@ -232,26 +244,34 @@
 (deffunction minimum ($?v)
 (if (=(length$ ?v) 1) then (nth$ 1 ?v) else 
 (eval(format nil "(min %s)" (implode$ ?v)))
-))
-
-(defglobal
-  ?*VALORES-f* = (create$ (f ?*ESTADO-INICIAL*))
-  ?*VALORES-g* = (create$ (g ?*ESTADO-INICIAL*))
-  ?*VALORES-h* = (create$ (h ?*ESTADO-INICIAL*))
-  ?*MIN* = (nth$ 1 ?*VALORES-f*)
-  ?*POSMIN* = 1
-  ?*ULTIMO-ESTADO* = (implode$ (estado-actual ?*PADRE*))
-  ?*VISITADOS* = (create$)
-)	
+))	
 
 ;;;;;;;;;;;***********BUSQUEDA INFORMADA*****************
 
 (deffunction busqueda_informada_con_visitados (?g ?h $?save_exec)
 (bind ?i 1)
+(bind ?*CON-PROHIBIDO* TRUE)
+(bind ?*FUNCION-g* (format nil "(funcall %s " ?g))
+(bind ?*FUNCION-g* (str-cat ?*FUNCION-g* "(create$ %s))"))
+(bind ?*FUNCION-h* (format nil "(funcall %s " ?h))
+(bind ?*FUNCION-h* (str-cat ?*FUNCION-h* "(create$ %s))"))
+(bind ?*VALORES-g* (create$ (g (implode$ ?*ESTADO-INICIAL*))))
+(bind ?*VALORES-h* (create$ (h (implode$ ?*ESTADO-INICIAL*))))
+(bind ?*VALORES-f* (create$ (f (implode$ ?*ESTADO-INICIAL*))))
+(bind ?*MIN* (minimum ?*VALORES-f*))
+
+(bind ?save_exec (nth 1 ?save_exec))
+
+(if (not (eq ?save_exec t))
+	then (printout t "Introduzca el nombre del fichero donde se almacenará la ejecución: ")
+		 (bind ?filename (read))
+		 (open ?filename ?save_exec "w")
+)
+
 (while (and (not (= ?*PASOS* ?i))   (not (exito ?*PADRE*)) (not (eq ?*LISTA* (create$)))) do
 	
 ;contador de n�mero de pasos
-(printout t "Paso " ?i crlf)
+(printout ?save_exec crlf "-------Paso " ?i "-------" crlf)
 
    (while (member$ ?*ULTIMO-ESTADO* ?*VISITADOS*) 
 ;borrar el padre de la posici�n ?*POSMIN* y los valores de esa posici�n en todas las listas
@@ -279,10 +299,10 @@
 
 ;Imprimimos los mensajes para saber valores de f=g+h
 	
-	(printout t "Padre= " ?*PADRE* crlf)
-	(printout t " g=" (nth ?*POSMIN* ?*VALORES-g*)
-				" h=" (nth ?*POSMIN* ?*VALORES-h*)
-				" f=g+h= " ?*MIN* crlf)
+	(printout ?save_exec "Padre = " ?*PADRE* crlf crlf)
+	(printout ?save_exec tab "g = " (nth ?*POSMIN* ?*VALORES-g*)
+				tab "h = " (nth ?*POSMIN* ?*VALORES-h*)
+				tab "f = g + h = " ?*MIN* crlf)
 				
 ;Borramos ahora el padre no visitado y los valores f=g+h
 ;Incluimos sus hijos y los valores f=g+h en las correspondientes listas, en profundidad
@@ -294,13 +314,19 @@
 			(bind ?*VALORES-h* (create$ (valores-funcion-lista h ?hijos) ?*VALORES-h*))
 			(bind ?*VALORES-f* (create$ (valores-funcion-lista f ?hijos) ?*VALORES-f*))
 ;incrementamos el contador
-(printout t " ?*VISITADOS*=" ?*VISITADOS* crlf)
-(printout t " ?*LISTA*=" ?*LISTA*  crlf )
+(printout ?save_exec crlf tab "?*VISITADOS* = " ?*VISITADOS* crlf)
+(printout ?save_exec crlf tab "?*LISTA* = " ?*LISTA*  crlf crlf)
 	(bind ?i (+ ?i 1))
 )
 )
 )
 ;;Salimos del bucle porque el padre sea �xito o porque no haya soluci�n
-(if  (exito ?*PADRE*) then (printout t "La solución es " ?*PADRE* crlf)
-else (if (=(length$ ?*LISTA*)0)  then (printout t "No hay solución" crlf)))
+(if  (exito ?*PADRE*) then (printout ?save_exec crlf "La solución es " ?*PADRE* crlf)
+else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solución." crlf)))
+
+(if (not (eq ?save_exec t))
+	then (close ?save_exec)
+	else TRUE
+)
+
 )
