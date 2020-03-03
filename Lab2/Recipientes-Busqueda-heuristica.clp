@@ -261,6 +261,20 @@
 (eval(format nil "(min %s)" (implode$ ?v)))
 ))	
 
+(deffunction minimum-floats($?v)
+	(if (=(length$ ?v) 1) 
+		then (nth$ 1 ?v)
+		else
+		(bind ?minf "(min")
+		(progn$ (?x ?v) (bind ?minf (str-cat ?minf (if (integerp ?x)
+														then (format nil " %d"  ?x)
+														else (format nil " %f"  ?x)
+									))))	
+		(bind ?minf (str-cat ?minf ")")) 
+		(eval ?minf)
+	)
+)
+
 ;;;;;;;;;;;***********BUSQUEDA INFORMADA*****************
 
 (deffunction busqueda_informada_con_visitados (?g ?h $?save_exec)
@@ -672,7 +686,7 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 	(bind ?*VALORES-h* (create$ (h (implode$ ?*ESTADO-INICIAL*))))
 	(bind ?*VALORES-f* (create$ (f (implode$ ?*ESTADO-INICIAL*))))
 	(bind ?*CON-PROHIBIDO TRUE)
-	(bind ?*MIN* (minimum ?*VALORES-g*))
+	(bind ?*MIN* (minimum-floats ?*VALORES-g*))
 	(bind ?*POSMIN* (member$ ?*MIN* ?*VALORES-g*))
 	
 	(if (nth 1 ?save_tree)
@@ -695,7 +709,7 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 			(if (eq ?*LISTA* (create$)) then (break))
 			
 			;FIXME: crashes because of floats :/
-			(bind ?*MIN* (minimum ?*VALORES-f*))
+			(bind ?*MIN* (minimum-floats ?*VALORES-f*))
 			(bind ?*POSMIN* (member$ ?*MIN* ?*VALORES-f*))
 			(bind ?*PADRE*  (explode$ (nth ?*POSMIN* ?*LISTA*)))
 			(bind ?*ULTIMO-ESTADO* (implode$(estado-actual ?*PADRE*)))
@@ -743,3 +757,7 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 	(close graph.dot)
 
 )
+
+
+;(load Recipientes-Busqueda-heuristica.clp)
+; (progn$ (?x (create$ 1 2 3 4.5)) (str-cat ?minf (format nil " %f"  ?x)))
