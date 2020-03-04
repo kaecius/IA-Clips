@@ -256,12 +256,12 @@
 
 
 ;;esta funci�n busca el m�nimo de una lista incluso si tiene menos de 2 elementos
-(deffunction minimum ($?v)
-(if (=(length$ ?v) 1) then (nth$ 1 ?v) else 
-(eval(format nil "(min %s)" (implode$ ?v)))
-))	
+; (deffunction minimum ($?v)
+; (if (=(length$ ?v) 1) then (nth$ 1 ?v) else 
+; (eval(format nil "(min %s)" (implode$ ?v)))
+; ))	
 
-(deffunction minimum-floats($?v)
+(deffunction minimum($?v)
 	(if (=(length$ ?v) 1) 
 		then (nth$ 1 ?v)
 		else
@@ -270,7 +270,7 @@
 														then (format nil " %d"  ?x)
 														else (format nil " %f"  ?x)
 									))))	
-		(bind ?minf (str-cat ?minf ")")) 
+		(bind ?minf (str-cat ?minf ")"))
 		(eval ?minf)
 	)
 )
@@ -401,7 +401,7 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 			then (bind ?no_solution TRUE) (break)
 		)
 
-		(if (not (= 1 ?i))
+		(if (and (not (= 1 ?i)) (nth 1 ?save_tree))
 			then (format graph.dot "    \"%s\" [label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\"><TR><TD>%s<BR/><FONT POINT-SIZE=\"10\">h = %d</FONT></TD><TD>%d</TD></TR></TABLE>>, shape=none];%n" ?*ULTIMO-ESTADO* ?*ULTIMO-ESTADO* ?*MIN* ?i)
 		)
 
@@ -411,13 +411,14 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 				 (if (exito ?*PADRE*) then (break))
 
 				 (bind ?hijos (hijos ?*PADRE*))
-
-				 (progn$ (?hijo ?hijos)
-				 	 (bind ?estado_hijo (implode$ (estado-actual (explode$ ?hijo))))
-				 	 (if (not (member$ ?estado_hijo ?*VISITADOS*))
-					 	then (format graph.dot "    \"%s\" [label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\"><TR><TD>%s<BR/><FONT POINT-SIZE=\"10\">h = %d</FONT></TD><TD> </TD></TR></TABLE>>, shape=none];%n" ?estado_hijo ?estado_hijo (h ?hijo))
-					 )
-					 (format graph.dot "    \"%s\" -> \"%s\" [label=\"%s\"];%n" ?*ULTIMO-ESTADO* ?estado_hijo (nth (length$ (explode$ ?hijo)) (explode$ ?hijo)))
+				 (if (nth 1 ?save_tree)
+				 	then (progn$ (?hijo ?hijos)
+							 (bind ?estado_hijo (implode$ (estado-actual (explode$ ?hijo))))
+							 (if (not (member$ ?estado_hijo ?*VISITADOS*))
+								 then (format graph.dot "    \"%s\" [label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\"><TR><TD>%s<BR/><FONT POINT-SIZE=\"10\">h = %d</FONT></TD><TD> </TD></TR></TABLE>>, shape=none];%n" ?estado_hijo ?estado_hijo (h ?hijo))
+							 )
+							 (format graph.dot "    \"%s\" -> \"%s\" [label=\"%s\"];%n" ?*ULTIMO-ESTADO* ?estado_hijo (nth (length$ (explode$ ?hijo)) (explode$ ?hijo)))
+						 )
 				 )
 
 				 (bind ?*LISTA* ?hijos)
@@ -437,11 +438,13 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 	(if ?no_solution
 		then (printout t "No hay solución." crlf)
 		else (printout t "La solución es " ?*PADRE* crlf)
-			 (format graph.dot "    \"%s\" [fillcolor=green, style=filled];%n" ?*ULTIMO-ESTADO*)
+			 (if (nth 1 ?save_tree) then (format graph.dot "    \"%s\" [fillcolor=green, style=filled];%n" ?*ULTIMO-ESTADO*))
 	)
 
-	(printout graph.dot "}" crlf)
-	(close graph.dot)
+	(if (nth 1 ?save_tree)
+		then (printout graph.dot "}" crlf)
+			 (close graph.dot)
+	)
 
 )
 
@@ -481,7 +484,7 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 
 		)
 
-		(if (not (= 1 ?i))
+		(if (and (not (= 1 ?i)) (nth 1 ?save_tree))
 			then (format graph.dot "    \"%s\" [label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\"><TR><TD>%s<BR/><FONT POINT-SIZE=\"10\">h = %d</FONT></TD><TD>%d</TD></TR></TABLE>>, shape=none];%n" ?*ULTIMO-ESTADO* ?*ULTIMO-ESTADO* ?*MIN* ?i)
 		)
 
@@ -492,12 +495,14 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 
 				 (bind ?hijos (hijos ?*PADRE*))
 
-				 (progn$ (?hijo ?hijos)
-				 	 (bind ?estado_hijo (implode$ (estado-actual (explode$ ?hijo))))
-				 	 (if (not (member$ ?estado_hijo ?*VISITADOS*))
-					 	then (format graph.dot "    \"%s\" [label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\"><TR><TD>%s<BR/><FONT POINT-SIZE=\"10\">h = %d</FONT></TD><TD> </TD></TR></TABLE>>, shape=none];%n" ?estado_hijo ?estado_hijo (h ?hijo))
-					 )
-					 (format graph.dot "    \"%s\" -> \"%s\" [label=\"%s\"];%n" ?*ULTIMO-ESTADO* ?estado_hijo (nth (length$ (explode$ ?hijo)) (explode$ ?hijo)))
+				 (if (nth 1 ?save_tree)
+				 	then (progn$ (?hijo ?hijos)
+						 	 (bind ?estado_hijo (implode$ (estado-actual (explode$ ?hijo))))
+						 	 (if (not (member$ ?estado_hijo ?*VISITADOS*))
+						 	 	 then (format graph.dot "    \"%s\" [label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\"><TR><TD>%s<BR/><FONT POINT-SIZE=\"10\">h = %d</FONT></TD><TD> </TD></TR></TABLE>>, shape=none];%n" ?estado_hijo ?estado_hijo (h ?hijo))
+						 	 )
+						 	 (format graph.dot "    \"%s\" -> \"%s\" [label=\"%s\"];%n" ?*ULTIMO-ESTADO* ?estado_hijo (nth (length$ (explode$ ?hijo)) (explode$ ?hijo)))
+						 )
 				 )
 
 				 (bind ?*LISTA* ?hijos)
@@ -516,11 +521,13 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 	(if ?no_solution
 		then (printout t "No hay solución." crlf)
 		else (printout t "La solución es " ?*PADRE* crlf)
-			 (format graph.dot "    \"%s\" [fillcolor=green, style=filled];%n" ?*ULTIMO-ESTADO*)
+			 (if (nth 1 ?save_tree) then (format graph.dot "    \"%s\" [fillcolor=green, style=filled];%n" ?*ULTIMO-ESTADO*))
 	)
 
-	(printout graph.dot "}" crlf)
-	(close graph.dot)
+	(if (nth 1 ?save_tree)
+		then (printout graph.dot "}" crlf)
+			 (close graph.dot)
+	)
 
 )
 
@@ -559,7 +566,7 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 
 		)
 
-		(if (not (= 1 ?i))
+		(if (and (not (= 1 ?i)) (nth 1 ?save_tree))
 			then (format graph.dot "    \"%s\" [label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\"><TR><TD>%s<BR/><FONT POINT-SIZE=\"10\">h = %d</FONT></TD><TD>%d</TD></TR></TABLE>>, shape=none];%n" ?*ULTIMO-ESTADO* ?*ULTIMO-ESTADO* ?*MIN* ?i)
 		)
 
@@ -570,12 +577,14 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 
 				 (bind ?hijos (hijos ?*PADRE*))
 
-				 (progn$ (?hijo ?hijos)
-				 	 (bind ?estado_hijo (implode$ (estado-actual (explode$ ?hijo))))
-				 	 (if (not (member$ ?estado_hijo ?*VISITADOS*)) ;Just not to erase second TD's content (order in which the node has been visited)
-					 	then (format graph.dot "    \"%s\" [label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\"><TR><TD>%s<BR/><FONT POINT-SIZE=\"10\">h = %d</FONT></TD><TD> </TD></TR></TABLE>>, shape=none];%n" ?estado_hijo ?estado_hijo (h ?hijo))
-					 )
-					 (format graph.dot "    \"%s\" -> \"%s\" [label=\"%s\"];%n" ?*ULTIMO-ESTADO* ?estado_hijo (nth (length$ (explode$ ?hijo)) (explode$ ?hijo)))
+				 (if (nth 1 ?save_tree)
+				 	then (progn$ (?hijo ?hijos)
+							 (bind ?estado_hijo (implode$ (estado-actual (explode$ ?hijo))))
+							 (if (not (member$ ?estado_hijo ?*VISITADOS*)) ;Just not to erase second TD's content (order in which the node has been visited)
+								 then (format graph.dot "    \"%s\" [label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\"><TR><TD>%s<BR/><FONT POINT-SIZE=\"10\">h = %d</FONT></TD><TD> </TD></TR></TABLE>>, shape=none];%n" ?estado_hijo ?estado_hijo (h ?hijo))
+							 )
+							 (format graph.dot "    \"%s\" -> \"%s\" [label=\"%s\"];%n" ?*ULTIMO-ESTADO* ?estado_hijo (nth (length$ (explode$ ?hijo)) (explode$ ?hijo)))
+						 )
 				 )
 
 				 (bind ?*LISTA* (create$ ?hijos ?*LISTA*))
@@ -591,11 +600,13 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 	(if (eq ?*LISTA* (create$))
 		then (printout t "No hay solución." crlf)
 		else (printout t "La solución es " ?*PADRE* crlf)
-			 (format graph.dot "    \"%s\" [fillcolor=green, style=filled];%n" ?*ULTIMO-ESTADO*)
+			 (if (nth 1 ?save_tree) then (format graph.dot "    \"%s\" [fillcolor=green, style=filled];%n" ?*ULTIMO-ESTADO*))
 	)
 
-	(printout graph.dot "}" crlf)
-	(close graph.dot)
+	(if (nth 1 ?save_tree)
+		then (printout graph.dot "}" crlf)
+			 (close graph.dot)
+	)
 
 )
 
@@ -634,7 +645,7 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 
 		)
 
-		(if (not (= 1 ?i))
+		(if (and (not (= 1 ?i)) (nth 1 ?save_tree))
 			then (format graph.dot "    \"%s\" [label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\"><TR><TD>%s<BR/><FONT POINT-SIZE=\"10\">f = g = %d</FONT></TD><TD>%d</TD></TR></TABLE>>, shape=none];%n" ?*ULTIMO-ESTADO* ?*ULTIMO-ESTADO* ?*MIN* ?i)
 		)
 
@@ -645,12 +656,14 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 
 				 (bind ?hijos (hijos ?*PADRE*))
 
-				 (progn$ (?hijo ?hijos)
-				 	 (bind ?estado_hijo (implode$ (estado-actual (explode$ ?hijo))))
-				 	 (if (not (member$ ?estado_hijo ?*VISITADOS*)) ;Just not to erase second TD's content (order in which the node has been visited)
-					 	then (format graph.dot "    \"%s\" [label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\"><TR><TD>%s<BR/><FONT POINT-SIZE=\"10\">f = g = %d</FONT></TD><TD> </TD></TR></TABLE>>, shape=none];%n" ?estado_hijo ?estado_hijo (g ?hijo))
-					 )
-					 (format graph.dot "    \"%s\" -> \"%s\" [label=\"%s\"];%n" ?*ULTIMO-ESTADO* ?estado_hijo (nth (length$ (explode$ ?hijo)) (explode$ ?hijo)))
+				 (if (nth 1 ?save_tree)
+				 	then (progn$ (?hijo ?hijos)
+							 (bind ?estado_hijo (implode$ (estado-actual (explode$ ?hijo))))
+							 (if (not (member$ ?estado_hijo ?*VISITADOS*)) ;Just not to erase second TD's content (order in which the node has been visited)
+								 then (format graph.dot "    \"%s\" [label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\"><TR><TD>%s<BR/><FONT POINT-SIZE=\"10\">f = g = %d</FONT></TD><TD> </TD></TR></TABLE>>, shape=none];%n" ?estado_hijo ?estado_hijo (g ?hijo))
+							 )
+							 (format graph.dot "    \"%s\" -> \"%s\" [label=\"%s\"];%n" ?*ULTIMO-ESTADO* ?estado_hijo (nth (length$ (explode$ ?hijo)) (explode$ ?hijo)))
+						 )
 				 )
 
 				 (bind ?*LISTA* (create$ ?hijos ?*LISTA*))
@@ -666,11 +679,13 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 	(if (eq ?*LISTA* (create$))
 		then (printout t "No hay solución." crlf)
 		else (printout t "La solución es " ?*PADRE* crlf)
-			 (format graph.dot "    \"%s\" [fillcolor=green, style=filled];%n" ?*ULTIMO-ESTADO*)
+			 (if (nth 1 ?save_tree) then (format graph.dot "    \"%s\" [fillcolor=green, style=filled];%n" ?*ULTIMO-ESTADO*))
 	)
 
-	(printout graph.dot "}" crlf)
-	(close graph.dot)
+	(if (nth 1 ?save_tree)
+		then (printout graph.dot "}" crlf)
+			 (close graph.dot)
+	)
 
 )
 
@@ -686,8 +701,8 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 	(bind ?*VALORES-h* (create$ (h (implode$ ?*ESTADO-INICIAL*))))
 	(bind ?*VALORES-f* (create$ (f (implode$ ?*ESTADO-INICIAL*))))
 	(bind ?*CON-PROHIBIDO TRUE)
-	(bind ?*MIN* (minimum-floats ?*VALORES-g*))
-	(bind ?*POSMIN* (member$ ?*MIN* ?*VALORES-g*))
+	(bind ?*MIN* (minimum ?*VALORES-f*))
+	(bind ?*POSMIN* (member$ ?*MIN* ?*VALORES-f*))
 	
 	(if (nth 1 ?save_tree)
 		then (printout t "Introduzca el nombre del fichero en el que se guardará el árbol en formato dot: ")
@@ -708,15 +723,14 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 			
 			(if (eq ?*LISTA* (create$)) then (break))
 			
-			;FIXME: crashes because of floats :/
-			(bind ?*MIN* (minimum-floats ?*VALORES-f*))
+			(bind ?*MIN* (minimum ?*VALORES-f*))
 			(bind ?*POSMIN* (member$ ?*MIN* ?*VALORES-f*))
 			(bind ?*PADRE*  (explode$ (nth ?*POSMIN* ?*LISTA*)))
 			(bind ?*ULTIMO-ESTADO* (implode$(estado-actual ?*PADRE*)))
 
 		)
 
-		(if (not (= 1 ?i))
+		(if (and (not (= 1 ?i)) (nth 1 ?save_tree))
 			then (format graph.dot "    \"%s\" [label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\"><TR><TD>%s<BR/><FONT POINT-SIZE=\"10\">f = g + h = %d</FONT></TD><TD>%d</TD></TR></TABLE>>, shape=none];%n" ?*ULTIMO-ESTADO* ?*ULTIMO-ESTADO* ?*MIN* ?i)
 		)
 
@@ -727,12 +741,14 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 
 				 (bind ?hijos (hijos ?*PADRE*))
 
-				 (progn$ (?hijo ?hijos)
-				 	 (bind ?estado_hijo (implode$ (estado-actual (explode$ ?hijo))))
-				 	 (if (not (member$ ?estado_hijo ?*VISITADOS*)) ;Just not to erase second TD's content (order in which the node has been visited)
-					 	then (format graph.dot "    \"%s\" [label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\"><TR><TD>%s<BR/><FONT POINT-SIZE=\"10\">f = g + h = %d</FONT></TD><TD> </TD></TR></TABLE>>, shape=none];%n" ?estado_hijo ?estado_hijo (g ?hijo))
-					 )
-					 (format graph.dot "    \"%s\" -> \"%s\" [label=\"%s\"];%n" ?*ULTIMO-ESTADO* ?estado_hijo (nth (length$ (explode$ ?hijo)) (explode$ ?hijo)))
+				 (if (nth 1 ?save_tree)
+				 	then (progn$ (?hijo ?hijos)
+							 (bind ?estado_hijo (implode$ (estado-actual (explode$ ?hijo))))
+							 (if (not (member$ ?estado_hijo ?*VISITADOS*)) ;Just not to erase second TD's content (order in which the node has been visited)
+								 then (format graph.dot "    \"%s\" [label=<<TABLE BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\"><TR><TD>%s<BR/><FONT POINT-SIZE=\"10\">f = g + h = %d</FONT></TD><TD> </TD></TR></TABLE>>, shape=none];%n" ?estado_hijo ?estado_hijo (g ?hijo))
+							 )
+							 (format graph.dot "    \"%s\" -> \"%s\" [label=\"%s\"];%n" ?*ULTIMO-ESTADO* ?estado_hijo (nth (length$ (explode$ ?hijo)) (explode$ ?hijo)))
+						 )
 				 )
 
 				 (bind ?*LISTA* (create$ ?hijos ?*LISTA*))
@@ -750,11 +766,13 @@ else (if (=(length$ ?*LISTA*)0)  then (printout ?save_exec crlf "No hay solució
 	(if (eq ?*LISTA* (create$))
 		then (printout t "No hay solución." crlf)
 		else (printout t "La solución es " ?*PADRE* crlf)
-			 (format graph.dot "    \"%s\" [fillcolor=green, style=filled];%n" ?*ULTIMO-ESTADO*)
+			 (if (nth 1 ?save_tree) then (format graph.dot "    \"%s\" [fillcolor=green, style=filled];%n" ?*ULTIMO-ESTADO*))
 	)
 
-	(printout graph.dot "}" crlf)
-	(close graph.dot)
+	(if (nth 1 ?save_tree)
+		then (printout graph.dot "}" crlf)
+			 (close graph.dot)
+	)
 
 )
 
