@@ -1,0 +1,38 @@
+         CLIPS (6.31 5/19/15)
+CLIPS> (load* Recipientes-Busqueda-heuristica.clp)
+TRUE
+CLIPS> (hill_climbing_v2 h-examen TRUE)
+Introduzca el nombre del fichero en el que se guardará el árbol en formato dot: hill_climbing_v2.dot
+
+-------Paso 1-------
+Padre = (0 0 cop)	h = 2
+
+-------Paso 2-------
+Padre = (0 3 cop llenar-y)	h = 1
+
+-------Paso 3-------
+Padre = (3 0 cop llenar-y volcar-y-x)	h = 1
+
+-------Paso 4-------
+Padre = (4 0 cop llenar-y volcar-y-x llenar-x)	h = 2
+
+-------Paso 5-------
+Padre = (1 3 cop llenar-y volcar-y-x llenar-x volcar-x-y)	h = 2
+
+-------Paso 6-------
+Padre = (1 0 cop llenar-y volcar-y-x llenar-x volcar-x-y tirar-y)	h = 1
+
+-------Paso 7-------
+Padre = (0 1 cop llenar-y volcar-y-x llenar-x volcar-x-y tirar-y volcar-x-y)	h = 1
+
+-------Paso 8-------
+Padre = (4 1 cop llenar-y volcar-y-x llenar-x volcar-x-y tirar-y volcar-x-y llenar-x)	h = 3
+
+-------Paso 9-------
+Padre = (2 3 cop llenar-y volcar-y-x llenar-x volcar-x-y tirar-y volcar-x-y llenar-x volcar-x-y)	h = 3
+
+-------Paso 10-------
+Padre = (2 0 cop llenar-y volcar-y-x llenar-x volcar-x-y tirar-y volcar-x-y llenar-x volcar-x-y tirar-y)	h = 0
+La solución es (2 0 cop llenar-y volcar-y-x llenar-x volcar-x-y tirar-y volcar-x-y llenar-x volcar-x-y tirar-y)
+TRUE
+CLIPS> (exit)

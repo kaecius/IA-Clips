@@ -1,0 +1,14 @@
+         CLIPS (6.31 5/19/15)
+CLIPS> (load* Recipientes-Busqueda-heuristica.clp)
+TRUE
+CLIPS> (hill_climbing_v1 h-examen TRUE)
+Introduzca el nombre del fichero en el que se guardará el árbol en formato dot: hill_climbing_v1.dot
+
+-------Paso 1-------
+Padre = (0 0 cop)	h = 2
+
+-------Paso 2-------
+Padre = (0 3 cop llenar-y)	h = 1
+No hay solución.
+TRUE
+CLIPS> (exit)

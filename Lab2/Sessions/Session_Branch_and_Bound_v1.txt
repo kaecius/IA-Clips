@@ -1,0 +1,44 @@
+         CLIPS (6.31 5/19/15)
+CLIPS> (load* Recipientes-Busqueda-heuristica.clp)
+TRUE
+CLIPS> (branch_and_bound_v1 coste-camino TRUE)
+Introduzca el nombre del fichero en el que se guardará el árbol en formato dot: branch_and_bound_v1.dot
+
+-------Paso 1-------
+Padre = (0 0 cop)	f = g = 0
+
+-------Paso 2-------
+Padre = (0 3 cop llenar-y)	f = g = 3
+
+-------Paso 3-------
+Padre = (4 0 cop llenar-x)	f = g = 4
+
+-------Paso 4-------
+Padre = (3 0 cop llenar-y volcar-y-x)	f = g = 6
+
+-------Paso 5-------
+Padre = (1 3 cop llenar-x volcar-x-y)	f = g = 8
+
+-------Paso 6-------
+Padre = (1 0 cop llenar-x volcar-x-y tirar-y)	f = g = 9
+
+-------Paso 7-------
+Padre = (0 1 cop llenar-x volcar-x-y tirar-y volcar-x-y)	f = g = 10
+
+-------Paso 8-------
+Padre = (4 3 cop llenar-y llenar-x)	f = g = 10
+
+-------Paso 9-------
+Padre = (3 3 cop llenar-y volcar-y-x llenar-y)	f = g = 12
+
+-------Paso 10-------
+Padre = (4 1 cop llenar-x volcar-x-y tirar-y volcar-x-y llenar-x)	f = g = 15
+
+-------Paso 11-------
+Padre = (4 2 cop llenar-y volcar-y-x llenar-y volcar-y-x)	f = g = 18
+
+-------Paso 12-------
+Padre = (0 2 cop llenar-y volcar-y-x llenar-y volcar-y-x tirar-x)	f = g = 20
+La solución es (0 2 cop llenar-y volcar-y-x llenar-y volcar-y-x tirar-x)
+TRUE
+CLIPS> (exit)
