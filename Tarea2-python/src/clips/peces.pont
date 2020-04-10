@@ -1,0 +1,79 @@
+; Fri Apr 10 16:42:28 CEST 2020
+; 
+;+ (version "3.5")
+;+ (build "Build 663")
+
+(defclass Pecera
+	(is-a USER)
+	(role concrete))
+
+(defclass PeceraStandard
+	(is-a Pecera)
+	(role concrete)
+	(single-slot Alto
+		(type INTEGER)
+		(default 480)
+;+		(cardinality 0 1)
+		(create-accessor read-write))
+	(single-slot Ancho
+		(type INTEGER)
+		(default 640)
+;+		(cardinality 0 1)
+		(create-accessor read-write)))
+
+(defclass Pez
+	(is-a USER)
+	(role concrete)
+	(single-slot Hambre
+		(type INTEGER)
+		(range 0 10)
+		(default 3)
+;+		(cardinality 0 1)
+		(create-accessor read-write))
+	(single-slot PosY
+		(type INTEGER)
+		(default 0)
+;+		(cardinality 0 1)
+		(create-accessor read-write))
+	(single-slot PosX
+		(type INTEGER)
+		(default 0)
+;+		(cardinality 0 1)
+		(create-accessor read-write)))
+
+(defclass Mundo_peces
+	(is-a USER)
+	(role concrete)
+	(single-slot Mundo
+		(type INSTANCE)
+;+		(allowed-classes PeceraStandard)
+		(default [pecera_standard])
+;+		(cardinality 0 1)
+		(create-accessor read-write))
+	(multislot Peces
+;+		(comment "Los peces del mundo")
+		(type INSTANCE)
+;+		(allowed-classes Pez)
+		(create-accessor read-write))
+	(single-slot Reloj
+		(type INTEGER)
+		(default 0)
+;+		(cardinality 0 1)
+		(create-accessor read-write)))
+
+(defclass Comida
+	(is-a USER)
+	(role concrete)
+	(single-slot Cantidad
+		(type INTEGER)
+		(default 20)
+;+		(cardinality 0 1)
+		(create-accessor read-write))
+	(single-slot PosY
+		(type INTEGER)
+;+		(cardinality 0 1)
+		(create-accessor read-write))
+	(single-slot PosX
+		(type INTEGER)
+;+		(cardinality 0 1)
+		(create-accessor read-write)))
