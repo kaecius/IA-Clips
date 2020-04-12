@@ -2,7 +2,10 @@ runCLIPS.sh
 session*
 .vscode
 Laboratorio 1 Búsqueda exhaustiva/*
-*png
+Lab1/*/*png
+Lab2/*/*png
+Lab1/*/*/*png
 *gv
 *dot
 .~lock*
+Tarea2-python/venv
