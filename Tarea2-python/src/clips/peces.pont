@@ -39,6 +39,11 @@
 		(type INTEGER)
 		(default 0)
 ;+		(cardinality 0 1)
+		(create-accessor read-write))
+	(single-slot Desplazamiento
+		(type INTEGER)
+		(default 50)
+;+		(cardinality 0 1)
 		(create-accessor read-write)))
 
 (defclass Mundo_peces

@@ -8,31 +8,44 @@
 
 		(Hambre 3)
 		(PosX 320)
-		(PosY 240))
+		(PosY 240)
+		(Desplazamiento 80)
+		)
 
 	([pez_verde] of  Pez
 
 		(Hambre 7)
 		(PosX 0)
-		(PosY 320))
+		(PosY 320)
+		(Desplazamiento 90)
+		)
 
 	([pez_rojo] of  Pez
 
 		(Hambre 10)
 		(PosX 320)
-		(PosY 0))
+		(PosY 0)
+		(Desplazamiento 1000)
+		)
 
 	([pez_azul] of  Pez
 
 		(Hambre 3)
 		(PosX 240)
-		(PosY 240))
+		(PosY 240)
+		(Desplazamiento 200)
+		)
 
 	([fuente] of  Comida
 
 		(Cantidad 20)
 		(PosX 640)
 		(PosY 0))
+
+	([pecera_standard] of  PeceraStandard
+
+		(Ancho 640)
+		(Alto 480))
 
 	([peces_colores] of  Mundo_peces
 
@@ -44,9 +57,5 @@
 			[pez_azul])
 		(Reloj 0))
 
-	([pecera_standard] of  PeceraStandard
-
-		(Ancho 640)
-		(Alto 480))
 
 )
