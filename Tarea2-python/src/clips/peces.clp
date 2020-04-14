@@ -1,6 +1,13 @@
 ;(load "Z:/home/xabilahu/Documentos/EHU/Tercero/SegundoCuatrimestre/IA/IA-Clips/Tarea2-python/src/clips/peces.pont")
 ;(load "Z:/home/xabilahu/Documentos/EHU/Tercero/SegundoCuatrimestre/IA/IA-Clips/Tarea2-python/src/clips/peces.pins")
 
+
+(defglobal
+    ?*TIEMPO-RECARGA* = (* -1 5)
+    ?*DECREMENTO-VIDA* = 1
+)
+
+
 ; FUNCIONES
 
 (deffunction fun4 ($?x)
@@ -93,9 +100,12 @@
 (deffunction desplaza-a-posicion (?pez $?desplazamiento)
     (bind ?posicionX (+ (obtener-valor ?pez PosX) (nth 1 ?desplazamiento)))
     (bind ?posicionY (+ (obtener-valor ?pez PosY) (nth 2 ?desplazamiento)))
+    (bind ?hambre (obtener-valor ?pez Hambre))
     (modificar-valor ?pez PosX ?posicionX)
     (modificar-valor ?pez PosY ?posicionY)
-    (modificar-valor ?pez Hambre (+ (obtener-valor ?pez Hambre) 1))
+    (if (< ?hambre 10 ) then
+        (modificar-valor ?pez Hambre (+ (obtener-valor ?pez Hambre) 1))
+    )
 )
 
 ; Reduce el hambre del Pez tanto como sea posible según la cantidad
@@ -110,6 +120,17 @@
     )
     (modificar-valor ?pez Hambre (- ?hambre_pez ?consumo))
     (modificar-valor ?comida_instance Cantidad (- ?cantidad_comida ?consumo))
+    ;incrementar vida
+    (bind ?incremento_vida (* ?consumo (obtener-valor ?comida_instance IncrementoVida)))
+    (bind ?vida (+ (obtener-valor ?pez Vida) ?incremento_vida))
+    (bind ?vida_maxima (obtener-valor ?pez VidaMaxima))
+
+    (if (<= ?vida ?vida_maxima) then
+        (modificar-valor ?pez Vida ?vida) else
+        (modificar-valor ?pez Vida ?vida_maxima)
+    
+    )
+    
 )
 
 (deffunction misma-posicion (?a $?b)
@@ -135,6 +156,12 @@
     (modificar-valor (nth 1 ?mundo) Reloj (+ ?actual 1))
 )
 
+
+(deffunction decrementar-vida ($?pez)
+    (bind ?actual (obtener-valor (nth 1 ?pez) Vida))
+    (modificar-valor (nth 1 ?pez) Vida (- ?actual ?*DECREMENTO-VIDA*))
+)
+
 ; REGLAS
 ;(Reloj ?t &:(<> 0 (mod ?t 2)))
 
@@ -145,25 +172,27 @@
 )
 
 (defrule MORIR
-    ?pez <- (object (is-a Pez) (Hambre 10))
+    ?pez <- (object (is-a Pez) (Vida ?v &:(= ?v 0)))
     ?mundo <- (object (is-a Mundo_peces) (Peces $?x ?y $?z &: (eq ?pez (instance-address ?y))) (Reloj ?t &:(> ?t 0)))
     => (quitar-valor ?mundo Peces ?pez)
     (incrementar-tiempo ?mundo)
 )
 
-(defrule MOVER
-    ?pez <- (object (is-a Pez) (Hambre ?h &: (<= ?h 6)))
+(defrule COMER
+    ?pez <- (object (is-a Pez) (Hambre ?h &: (> ?h 6) ) (Vida ?v &:(> ?v 0))) ;&: (<> ?h 10)
+    ?comida <- (object (is-a Comida) (Cantidad ?c &: (> ?c 0)))
     ?mundo <- (object (is-a Mundo_peces) (Peces $?x ?y $?z &: (eq ?pez (instance-address ?y))) (Reloj ?t &:(> ?t 0)))
+    (test (misma-posicion ?comida ?pez))
     =>
-    (bind ?desplazamiento (calcular-desplazamiento ?pez))
-    (if (comprobarLimites ?pez (obtener-valor ?mundo Mundo) ?desplazamiento) then 
-        (desplaza-a-posicion ?pez ?desplazamiento))
+    (comer-pez ?pez ?comida)
     (incrementar-tiempo ?mundo)
 )
 
+
+
 (defrule MOVER-A-COMIDA
-    ?pez <- (object (is-a Pez) (Hambre ?h &: (> ?h 6) &: (<> ?h 10)))
-    ?comida <- (object (is-a Comida))
+    ?pez <- (object (is-a Pez) (Hambre ?h &: (> ?h 6) &: (<> ?h 10)  ) (Vida ?v &:(> ?v 0)) ) ;
+    ?comida <- (object (is-a Comida) (Cantidad ?c &:(> ?c 0)))
     ?mundo <- (object (is-a Mundo_peces) (Peces $?x ?y $?z &: (eq ?pez (instance-address ?y))) (Reloj ?t &:(> ?t 0)))
     (test (not (misma-posicion ?comida ?pez)))
     =>
@@ -173,22 +202,69 @@
     (incrementar-tiempo ?mundo)
 )
 
-(defrule COMER
-    ?pez <- (object (is-a Pez) (Hambre ?h &: (> ?h 6) &: (<> ?h 10)))
-    ?comida <- (object (is-a Comida) (Cantidad ?c &: (> ?c 0)))
+(defrule MOVER
+    ?pez <- (object (is-a Pez)(Hambre ?h &: (<= ?h 6)) (Vida ?v &:(> ?v 0)));
     ?mundo <- (object (is-a Mundo_peces) (Peces $?x ?y $?z &: (eq ?pez (instance-address ?y))) (Reloj ?t &:(> ?t 0)))
-    (test (misma-posicion ?comida ?pez))
-    => 
-    ;(modificar-valor ?pez PosX (obtener-valor ?comida PosX))
-    ;(modificar-valor ?pez PosY (obtener-valor ?comida PosY))    
-    (comer-pez ?pez ?comida)
+    =>
+    (bind ?desplazamiento (calcular-desplazamiento ?pez))
+    (if (comprobarLimites ?pez (obtener-valor ?mundo Mundo) ?desplazamiento) then 
+        (desplaza-a-posicion ?pez ?desplazamiento))
     (incrementar-tiempo ?mundo)
 )
+
+(defrule MOVERSE-A-COMIDA-HAMBRIENTO
+    ?pez <- (object (is-a Pez) (Hambre ?h &:(= ?h 10)) (Vida ?v &:(> ?v 0)) ) ;
+    ?comida <- (object (is-a Comida) (Cantidad ?c &:(> ?c 0)))
+    ?mundo <- (object (is-a Mundo_peces) (Peces $?x ?y $?z &: (eq ?pez (instance-address ?y))) (Reloj ?t &:(> ?t 0)))
+    (test (not (misma-posicion ?comida ?pez)))
+    =>
+    (bind ?desplazamiento (calcular-desplazamiento-a-comida ?pez ?comida))
+    (if (comprobarLimites ?pez (obtener-valor ?mundo Mundo) ?desplazamiento) then 
+        (desplaza-a-posicion ?pez ?desplazamiento))
+    (decrementar-vida ?pez)
+    (incrementar-tiempo ?mundo)
+
+
+)
+
+
+(defrule MOVERSE-HAMBRIENTO
+    ?pez <- (object (is-a Pez) (Hambre ?h &:(> ?h 6))  (Vida ?v &:(> ?v 0)) )
+    ?comida <- (object (is-a Comida) (Cantidad ?c &:(<= ?c 0)))
+    ?mundo <- (object (is-a Mundo_peces) (Peces $?x ?y $?z &: (eq ?pez (instance-address ?y))) (Reloj ?t &:(> ?t 0)))
+    =>
+    (bind ?desplazamiento (calcular-desplazamiento ?pez))
+    (if (comprobarLimites ?pez (obtener-valor ?mundo Mundo) ?desplazamiento) then 
+        (desplaza-a-posicion ?pez ?desplazamiento))
+    (if (= (obtener-valor ?pez Hambre ) 10) then
+        (decrementar-vida ?pez)
+    )
+    (decrementar-vida ?pez)
+    (incrementar-tiempo ?mundo)
+
+)
+
+(defrule AMAZON-AL-RESCATE
+    ?comida <- (object (is-a Comida) (Cantidad ?c &:(<= ?c 0) &:(>  ?c ?*TIEMPO-RECARGA*)))
+    ?mundo <- (object (is-a Mundo_peces)  (Reloj ?t &:(> ?t 0)))
+    => 
+    (modificar-valor ?comida Cantidad (- (obtener-valor ?comida Cantidad) 1))
+    (incrementar-tiempo ?mundo)
+)
+
+(defrule SEUR-HA-LLEGADO-Y-ESTABAS-EN-CASA
+    ?comida <- (object (is-a Comida) (Cantidad ?c &:(=  ?c ?*TIEMPO-RECARGA*)))
+    ?mundo <- (object (is-a Mundo_peces)  (Reloj ?t &:(> ?t 0)))
+    => 
+   (modificar-valor ?comida Cantidad 20)
+   (incrementar-tiempo ?mundo)
+) 
+
 
 ;[X] que al mover les entre hambre
 ;[ ] sistema de sexos
 ;[ ] reproducción por cercanía y nivel de hambre -> rule ovular
 ;[ ] Agresivo si sexo igual mientras reproduce
-;[ ] Vida de los peces
-;[ ] La comida restaura una cierta cantidad de vida 
-;[ ] Una vez tengas 10 de hambre la vida se va reduciendo x unidades
+;[X] Vida de los peces
+;[X] La comida restaura una cierta cantidad de vida 
+;[X] Una vez tengas 10 de hambre la vida se va reduciendo x unidades

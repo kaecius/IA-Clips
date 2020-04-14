@@ -44,7 +44,18 @@
 		(type INTEGER)
 		(default 50)
 ;+		(cardinality 0 1)
-		(create-accessor read-write)))
+		(create-accessor read-write))
+	(single-slot Vida
+		(type INTEGER)
+		(default 30)
+;+		(cardinality 0 1)
+		(create-accessor read-write))
+	(single-slot VidaMaxima
+		(type INTEGER)
+		(default 30)
+;+		(cardinality 0 1)
+		(create-accessor read))
+	)
 
 (defclass Mundo_peces
 	(is-a USER)
@@ -80,5 +91,10 @@
 		(create-accessor read-write))
 	(single-slot PosX
 		(type INTEGER)
+;+		(cardinality 0 1)
+		(create-accessor read-write))
+	(single-slot IncrementoVida
+		(type INTEGER)
+		(default 1)
 ;+		(cardinality 0 1)
 		(create-accessor read-write)))

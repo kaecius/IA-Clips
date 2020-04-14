@@ -40,7 +40,9 @@
 
 		(Cantidad 20)
 		(PosX 640)
-		(PosY 0))
+		(PosY 0)
+		(IncrementoVida 30)
+		)
 
 	([pecera_standard] of  PeceraStandard
 
