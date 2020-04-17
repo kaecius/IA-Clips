@@ -63,7 +63,7 @@
 		(default 3)
 ;+		(cardinality 0 1)
 		(create-accessor read-write))
-	(single-slot RecienNacido
+	(single-slot PeriodoNoReproducirse
 		(type INTEGER)
 		(default 0)
 ;+		(cardinality 0 1)

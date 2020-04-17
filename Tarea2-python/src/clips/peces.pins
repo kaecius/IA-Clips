@@ -1,9 +1,8 @@
 (definstances FISH
 	([fuente] of  Comida
 		(Cantidad 20)
-		(IncrementoVida 30)
-		(PosX 640)
-		(PosY 0))
+		(PosX 320)
+		(PosY 240))
 
 	([pecera_standard] of  PeceraStandard
 		(Alto 480)
@@ -19,7 +18,7 @@
 	([pez_azul] of  Pez
 		(Fuerza 20)
 		(Sexo Macho)
-		(RecienNacido 3)
+		(PeriodoNoReproducirse 3)
 		(Desplazamiento 200)
 		(PosX 240)
 		(PosY 240))

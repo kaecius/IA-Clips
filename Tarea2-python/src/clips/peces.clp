@@ -1,7 +1,5 @@
-;(load "Z:/home/xabilahu/Documentos/EHU/Tercero/SegundoCuatrimestre/IA/IA-Clips/Tarea2-python/src/clips/peces.pont")
-;(load "Z:/home/xabilahu/Documentos/EHU/Tercero/SegundoCuatrimestre/IA/IA-Clips/Tarea2-python/src/clips/peces.pins")
-
 ; (set-dynamic-constraint-checking) Validación dinámica de facets restrictivos (p.e. range, allowed-classes, allowed-values)
+; (set-salience-evaluation when-activated) Salience dinámica
 
 (defglobal
     ?*TIEMPO-RECARGA* = (* -1 5)
@@ -109,10 +107,7 @@
     (bind ?posicionY (+ (obtener-valor ?pez PosY) (nth 2 ?desplazamiento)))
     (bind ?hambre (obtener-valor ?pez Hambre))
     (modificar-valor ?pez PosX ?posicionX)
-    (modificar-valor ?pez PosY ?posicionY)
-    (if (< ?hambre 10 ) then
-        (modificar-valor ?pez Hambre (+ (obtener-valor ?pez Hambre) 1))
-    )
+    (modificar-valor ?pez PosY ?posicionY)   
 )
 
 ; Reduce el hambre del Pez tanto como sea posible según la cantidad
@@ -185,7 +180,7 @@
     (bind ?candidatos (create$))
     (progn$ (?pez ?pecera)
         (if (and (eq (obtener-valor ?pez Sexo) Macho) 
-                 (= (obtener-valor ?pez RecienNacido) 0)
+                 (= (obtener-valor ?pez PeriodoNoReproducirse) 0)
                  (< (obtener-valor ?pez Hambre) 10)
                  (<= (distancia-mahattan ?h ?pez) ?*RANGO-REPRODUCCION*)) then
                      (bind ?candidatos (create$ ?candidatos ?pez))
@@ -266,12 +261,14 @@
         (modificar-valor ?p Hambre (+ ?hambre ?aumento))
     )
 
+    (modificar-valor ?h PeriodoNoReproducirse ?*INMUNIDAD*)
+
     (bind ?*NUMERO-HIJOS* (+ ?*NUMERO-HIJOS* 1))
 
     (make-instance (sym-cat hijo- ?*NUMERO-HIJOS*) of Pez 
         (VidaMaxima ?vida) (Sexo ?sexo)
         (Fuerza ?fuerza) (Desplazamiento ?desplazamiento)
-        (PosX ?posx) (PosY ?posy) (RecienNacido ?*INMUNIDAD*)
+        (PosX ?posx) (PosY ?posy) (PeriodoNoReproducirse ?*INMUNIDAD*)
     )
 )
 
@@ -285,9 +282,14 @@
 ; Daemon que actualiza los peces recién nacidos cada tick de reloj
 (defmessage-handler Mundo_peces put-Reloj after (?incremento)
     (progn$ (?pez ?self:Peces)
-        (bind ?rnacido (obtener-valor ?pez RecienNacido))
+        (bind ?hambre (obtener-valor ?pez Hambre))
+        (if (< ?hambre 10 ) then
+            (modificar-valor ?pez Hambre (+ ?hambre 1)) else
+            (decrementar-vida ?pez)
+        )
+        (bind ?rnacido (obtener-valor ?pez PeriodoNoReproducirse))
         (if (> ?rnacido 0) then
-            (modificar-valor ?pez RecienNacido (- ?rnacido 1))
+            (modificar-valor ?pez PeriodoNoReproducirse (- ?rnacido 1))
         )
     )
 )
@@ -302,45 +304,27 @@
 )
 
 (defrule MORIR
-    (declare (salience ?*PRIORIDAD*))
+    (declare (salience (prioridad-tiempo)))
     ?pez <- (object (is-a Pez) (Vida ?v &:(<= ?v 0)))
     ?mundo <- (object (is-a Mundo_peces) (Peces $?x ?y $?z &: (eq ?pez (instance-address ?y))) (Reloj ?t &:(> ?t 0)))
-    => (quitar-valor ?mundo Peces ?pez)
-    ; (incrementar-tiempo ?mundo)
-)
-
-(defrule ESPERAR-RELLENO-COMIDA
-    (declare (salience ?*PRIORIDAD*))
-    ?comida <- (object (is-a Comida) (Cantidad ?c &:(<= ?c 0) &:(>  ?c ?*TIEMPO-RECARGA*)))
-    ?mundo <- (object (is-a Mundo_peces) (Reloj ?t &:(> ?t 0)))
     => 
-    (modificar-valor ?comida Cantidad (- (obtener-valor ?comida Cantidad) 1))
-    ; (incrementar-tiempo ?mundo)
-)
-
-(defrule RELLENAR-COMIDA
-    (declare (salience ?*PRIORIDAD*))
-    ?comida <- (object (is-a Comida) (Cantidad ?c &:(=  ?c ?*TIEMPO-RECARGA*)))
-    ?mundo <- (object (is-a Mundo_peces) (Reloj ?t &:(> ?t 0)))
-    => 
-   (modificar-valor ?comida Cantidad ?*CANTIDAD-TRANSPORTE*)
-;    (incrementar-tiempo ?mundo)
+    (quitar-valor ?mundo Peces ?pez)
+    (send ?pez delete)
 )
 
 (defrule COMER
-    (declare (salience ?*PRIORIDAD*))
+    (declare (salience (prioridad-tiempo)))
     ?pez <- (object (is-a Pez) (Hambre ?h &: (> ?h 6)) (Vida ?v &:(> ?v 0)))
     ?comida <- (object (is-a Comida) (Cantidad ?c &: (> ?c 0)))
     ?mundo <- (object (is-a Mundo_peces) (Peces $?x ?y $?z &: (eq ?pez (instance-address ?y))) (Reloj ?t &:(> ?t 0)))
     (test (misma-posicion ?comida ?pez))
     =>
     (comer-pez ?pez ?comida)
-    ; (incrementar-tiempo ?mundo)
 )
 
-(defrule CANDIDATOS-REPRODUCIRSEç
-    (declare (salience ?*PRIORIDAD*))
-    ?hembra <- (object (is-a Pez) (Sexo Hembra) (Hambre ?h &: (< ?h 10)) (RecienNacido ?r &: (= ?r 0)))
+(defrule CANDIDATOS-REPRODUCIRSE
+    (declare (salience (prioridad-tiempo)))
+    ?hembra <- (object (is-a Pez) (Sexo Hembra) (Hambre ?h &: (< ?h 10)) (PeriodoNoReproducirse ?r &: (= ?r 0)))
     ?mundo <- (object (is-a Mundo_peces) (Peces $?x ?y $?z &: (eq ?hembra (instance-address ?y))) (Reloj ?t &:(> ?t 0)))
     =>
     (bind ?hembra_instance (instance-name ?hembra))
@@ -351,22 +335,20 @@
             (assert (reproducir ?hembra_instance (nth 1 ?candidatos)))
         )
     )
-    ; (incrementar-tiempo ?mundo)
 )
 
 (defrule PELEA
-    (declare (salience ?*PRIORIDAD*))
-    ?hecho <- (hembra ?h candidatos ?c)
+    (declare (salience (prioridad-tiempo)))
+    ?hecho <- (hembra ?h candidatos $?c)
     ?mundo <- (object (is-a Mundo_peces) (Reloj ?t &:(> ?t 0)))
     =>
     (bind ?ganador (pelear ?c))
     (retract ?hecho)
     (assert (reproducir ?h ?ganador))
-    ; (incrementar-tiempo ?mundo)
 )
 
 (defrule REPRODUCIRSE
-    (declare (salience ?*PRIORIDAD*))
+    (declare (salience (prioridad-tiempo)))
     ?hecho <- (reproducir ?h ?m)
     ?mundo <- (object (is-a Mundo_peces) (Reloj ?t &:(> ?t 0)))
     =>
@@ -374,11 +356,10 @@
     (bind ?peces (obtener-valores ?mundo Peces))
     (modificar-valor ?mundo Peces (create$ ?peces ?hijo))
     (retract ?hecho)
-    ; (incrementar-tiempo ?mundo)
 )
 
 (defrule MOVER-A-COMIDA
-    (declare (salience ?*PRIORIDAD*))
+    (declare (salience (prioridad-tiempo)))
     ?pez <- (object (is-a Pez) (Hambre ?h &: (> ?h 6) &: (<> ?h 10)) (Vida ?v &:(> ?v 0)))
     ?comida <- (object (is-a Comida) (Cantidad ?c &:(> ?c 0)))
     ?mundo <- (object (is-a Mundo_peces) (Peces $?x ?y $?z &: (eq ?pez (instance-address ?y))) (Reloj ?t &:(> ?t 0)))
@@ -387,22 +368,21 @@
     (bind ?desplazamiento (calcular-desplazamiento-a-comida ?pez ?comida))
     (if (comprobarLimites ?pez (obtener-valor ?mundo Mundo) ?desplazamiento) then 
         (desplaza-a-posicion ?pez ?desplazamiento))
-    ; (incrementar-tiempo ?mundo)
 )
 
 (defrule MOVER
-    (declare (salience ?*PRIORIDAD*))
+    (declare (salience (prioridad-tiempo)))
     ?pez <- (object (is-a Pez)(Hambre ?h &: (<= ?h 6)) (Vida ?v &:(> ?v 0)));
     ?mundo <- (object (is-a Mundo_peces) (Peces $?x ?y $?z &: (eq ?pez (instance-address ?y))) (Reloj ?t &:(> ?t 0)))
+    (not (reproducirse $?a))
     =>
     (bind ?desplazamiento (calcular-desplazamiento ?pez))
     (if (comprobarLimites ?pez (obtener-valor ?mundo Mundo) ?desplazamiento) then 
         (desplaza-a-posicion ?pez ?desplazamiento))
-    ; (incrementar-tiempo ?mundo)
 )
 
 (defrule MOVERSE-A-COMIDA-HAMBRIENTO
-    (declare (salience ?*PRIORIDAD*))
+    (declare (salience (prioridad-tiempo)))
     ?pez <- (object (is-a Pez) (Hambre ?h &:(= ?h 10)) (Vida ?v &:(> ?v 0)) ) ;
     ?comida <- (object (is-a Comida) (Cantidad ?c &:(> ?c 0)))
     ?mundo <- (object (is-a Mundo_peces) (Peces $?x ?y $?z &: (eq ?pez (instance-address ?y))) (Reloj ?t &:(> ?t 0)))
@@ -411,12 +391,10 @@
     (bind ?desplazamiento (calcular-desplazamiento-a-comida ?pez ?comida))
     (if (comprobarLimites ?pez (obtener-valor ?mundo Mundo) ?desplazamiento) then 
         (desplaza-a-posicion ?pez ?desplazamiento))
-    (decrementar-vida ?pez)
-    ; (incrementar-tiempo ?mundo)
 )
 
 (defrule MOVERSE-HAMBRIENTO
-    (declare (salience ?*PRIORIDAD*))
+    (declare (salience (prioridad-tiempo)))
     ?pez <- (object (is-a Pez) (Hambre ?h &:(> ?h 6)) (Vida ?v &:(> ?v 0)) )
     ?comida <- (object (is-a Comida) (Cantidad ?c &:(<= ?c 0)))
     ?mundo <- (object (is-a Mundo_peces) (Peces $?x ?y $?z &: (eq ?pez (instance-address ?y))) (Reloj ?t &:(> ?t 0)))
@@ -424,11 +402,22 @@
     (bind ?desplazamiento (calcular-desplazamiento ?pez))
     (if (comprobarLimites ?pez (obtener-valor ?mundo Mundo) ?desplazamiento) then 
         (desplaza-a-posicion ?pez ?desplazamiento))
-    (if (= (obtener-valor ?pez Hambre ) 10) then
-        (decrementar-vida ?pez)
-    )
-    (decrementar-vida ?pez)
-    ; (incrementar-tiempo ?mundo)
+)
+
+(defrule ESPERAR-RELLENO-COMIDA
+    (declare (salience (prioridad-tiempo)))
+    ?comida <- (object (is-a Comida) (Cantidad ?c &:(<= ?c 0) &:(>  ?c ?*TIEMPO-RECARGA*)))
+    ?mundo <- (object (is-a Mundo_peces) (Reloj ?t &:(> ?t 0)))
+    => 
+    (modificar-valor ?comida Cantidad (- (obtener-valor ?comida Cantidad) 1))
+)
+
+(defrule RELLENAR-COMIDA
+    (declare (salience (prioridad-tiempo)))
+    ?comida <- (object (is-a Comida) (Cantidad ?c &:(=  ?c ?*TIEMPO-RECARGA*)))
+    ?mundo <- (object (is-a Mundo_peces) (Reloj ?t &:(> ?t 0)))
+    => 
+   (modificar-valor ?comida Cantidad ?*CANTIDAD-TRANSPORTE*)
 )
 
 ;[X] que al mover les entre hambre
