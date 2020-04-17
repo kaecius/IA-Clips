@@ -1,4 +1,4 @@
-#!/home/kaecius/Documentos/testClipsPython/venv/bin/python3
+#!insert_dir
 # -*- coding: utf-8 -*-
 import re
 import sys
