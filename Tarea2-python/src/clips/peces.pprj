@@ -1,4 +1,4 @@
-; Fri Apr 10 16:42:28 CEST 2020
+; Thu Apr 16 13:30:30 CEST 2020
 ; 
 ;+ (version "3.5")
 ;+ (build "Build 663")
@@ -20,10 +20,10 @@
 ([BROWSER_SLOT_NAMES] of  Property_List
 
 	(properties
-		[peces_ProjectKB_Class20037]
-		[peces_ProjectKB_Class20038]
-		[peces_ProjectKB_Class20039]
-		[peces_ProjectKB_Class20040]))
+		[peces_ProjectKB_Class10045]
+		[peces_ProjectKB_Class10046]
+		[peces_ProjectKB_Class10047]
+		[peces_ProjectKB_Class10048]))
 
 ([CLSES_TAB] of  Widget
 
@@ -67,7 +67,7 @@
 	(is_hidden FALSE)
 	(widget_class_name "edu.stanford.smi.protege.widget.InstancesTab"))
 
-([KB_419740_Class3] of  Map
+([KB_510346_Class3] of  Map
 )
 
 ([KB_984244_Class0] of  String
@@ -78,9 +78,9 @@
 ([KB_984244_Class1] of  Map
 
 	(entries
-		[peces_ProjectKB_Class20041]
-		[peces_ProjectKB_Class20042]
-		[peces_ProjectKB_Class20043]))
+		[peces_ProjectKB_Class10049]
+		[peces_ProjectKB_Class10050]
+		[peces_ProjectKB_Class10051]))
 
 ([KB_984244_Class10] of  Property_List
 )
@@ -613,59 +613,50 @@
 	(x 0)
 	(y 60))
 
-([peces_ProjectKB_Class107] of  String
-
-	(name "SearchTab_Query"))
-
-([peces_ProjectKB_Class20004] of  Widget
-
-	(is_hidden TRUE)
-	(property_list [peces_ProjectKB_Class20005])
-	(widget_class_name "org.protege.owl.mm.portability.protege3.MappingMasterTab"))
-
-([peces_ProjectKB_Class20005] of  Property_List
-)
-
-([peces_ProjectKB_Class20037] of  String
+([peces_ProjectKB_Class10045] of  String
 
 	(name ":INSTANCE-ANNOTATION")
 	(string_value "%3AANNOTATION-TEXT"))
 
-([peces_ProjectKB_Class20038] of  String
-
-	(name "PeceraStandard")
-	(string_value "{PeceraStandard}"))
-
-([peces_ProjectKB_Class20039] of  String
+([peces_ProjectKB_Class10046] of  String
 
 	(name ":PAL-CONSTRAINT")
 	(string_value "%3APAL-NAME"))
 
-([peces_ProjectKB_Class20040] of  String
+([peces_ProjectKB_Class10047] of  String
+
+	(name "PeceraStandard")
+	(string_value "{PeceraStandard}"))
+
+([peces_ProjectKB_Class10048] of  String
 
 	(name ":META-CLASS")
 	(string_value "%3ANAME"))
 
-([peces_ProjectKB_Class20041] of  Map_Entry
+([peces_ProjectKB_Class10049] of  Map_Entry
+
+	(key "suppress_instance_counting")
+	(key_class "java.lang.String")
+	(value "false")
+	(value_class "java.lang.String"))
+
+([peces_ProjectKB_Class10050] of  Map_Entry
 
 	(key "add_name_on_instance_form")
 	(key_class "java.lang.String")
 	(value "false")
 	(value_class "java.lang.String"))
 
-([peces_ProjectKB_Class20042] of  Map_Entry
+([peces_ProjectKB_Class10051] of  Map_Entry
 
 	(key "change_tracking_active")
 	(key_class "java.lang.String")
 	(value "false")
 	(value_class "java.lang.String"))
 
-([peces_ProjectKB_Class20043] of  Map_Entry
+([peces_ProjectKB_Class107] of  String
 
-	(key "suppress_instance_counting")
-	(key_class "java.lang.String")
-	(value "false")
-	(value_class "java.lang.String"))
+	(name "SearchTab_Query"))
 
 ([peces_ProjectKB_Class4] of  Widget
 
@@ -681,10 +672,10 @@
 	(browser_slot_names [BROWSER_SLOT_NAMES])
 	(customized_instance_widgets
 		[INSTANCE_ANNOTATION_FORM_WIDGET]
+		[STANDARD_CLASS_FORM_WIDGET]
 		[STANDARD_SLOT_FORM_WIDGET]
 		[STANDARD_FACET_FORM_WIDGET]
-		[PAL_FORM_WIDGET]
-		[STANDARD_CLASS_FORM_WIDGET])
+		[PAL_FORM_WIDGET])
 	(default_cls_metaclass ":STANDARD-CLASS")
 	(default_facet_metaclass ":STANDARD-FACET")
 	(default_instance_widget_class_name "edu.stanford.smi.protege.widget.FormWidget")

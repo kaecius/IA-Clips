@@ -1,8 +1,3 @@
-; Fri Apr 10 16:42:28 CEST 2020
-; 
-;+ (version "3.5")
-;+ (build "Build 663")
-
 (defclass Pecera
 	(is-a USER)
 	(role concrete))
@@ -10,39 +5,24 @@
 (defclass PeceraStandard
 	(is-a Pecera)
 	(role concrete)
-	(single-slot Alto
-		(type INTEGER)
-		(default 480)
-;+		(cardinality 0 1)
-		(create-accessor read-write))
 	(single-slot Ancho
 		(type INTEGER)
 		(default 640)
+;+		(cardinality 0 1)
+		(create-accessor read-write))
+	(single-slot Alto
+		(type INTEGER)
+		(default 480)
 ;+		(cardinality 0 1)
 		(create-accessor read-write)))
 
 (defclass Pez
 	(is-a USER)
 	(role concrete)
-	(single-slot Hambre
+	(single-slot VidaMaxima
 		(type INTEGER)
-		(range 0 10)
-		(default 3)
-;+		(cardinality 0 1)
-		(create-accessor read-write))
-	(single-slot PosY
-		(type INTEGER)
-		(default 0)
-;+		(cardinality 0 1)
-		(create-accessor read-write))
-	(single-slot PosX
-		(type INTEGER)
-		(default 0)
-;+		(cardinality 0 1)
-		(create-accessor read-write))
-	(single-slot Desplazamiento
-		(type INTEGER)
-		(default 50)
+		(range 1 100)
+		(default 30)
 ;+		(cardinality 0 1)
 		(create-accessor read-write))
 	(single-slot Vida
@@ -50,26 +30,58 @@
 		(default 30)
 ;+		(cardinality 0 1)
 		(create-accessor read-write))
-	(single-slot VidaMaxima
-		(type INTEGER)
-		(default 30)
+	(single-slot Sexo
+		(type SYMBOL)
+		(allowed-values Macho Hembra)
+		(default Hembra)
 ;+		(cardinality 0 1)
-		(create-accessor read))
-	)
+		(create-accessor read-write))
+	(single-slot Fuerza
+		(type INTEGER)
+		(range 1 100)
+		(default 5)
+;+		(cardinality 0 1)
+		(create-accessor read-write))
+	(single-slot Desplazamiento
+		(type INTEGER)
+		(default 50)
+;+		(cardinality 0 1)
+		(create-accessor read-write))
+	(single-slot PosX
+		(type INTEGER)
+		(default 0)
+;+		(cardinality 0 1)
+		(create-accessor read-write))
+	(single-slot PosY
+		(type INTEGER)
+		(default 0)
+;+		(cardinality 0 1)
+		(create-accessor read-write))
+	(single-slot Hambre
+		(type INTEGER)
+		(range 0 10)
+		(default 3)
+;+		(cardinality 0 1)
+		(create-accessor read-write))
+	(single-slot RecienNacido
+		(type INTEGER)
+		(default 0)
+;+		(cardinality 0 1)
+		(create-accessor read-write)))
 
 (defclass Mundo_peces
 	(is-a USER)
 	(role concrete)
+	(multislot Peces
+;+		(comment "Los peces del mundo")
+		(type INSTANCE)
+		(allowed-classes Pez)
+		(create-accessor read-write))
 	(single-slot Mundo
 		(type INSTANCE)
 ;+		(allowed-classes PeceraStandard)
 		(default [pecera_standard])
 ;+		(cardinality 0 1)
-		(create-accessor read-write))
-	(multislot Peces
-;+		(comment "Los peces del mundo")
-		(type INSTANCE)
-;+		(allowed-classes Pez)
 		(create-accessor read-write))
 	(single-slot Reloj
 		(type INTEGER)
@@ -80,21 +92,23 @@
 (defclass Comida
 	(is-a USER)
 	(role concrete)
+	(single-slot IncrementoVida
+		(type INTEGER)
+		(default 1)
+;+		(cardinality 0 1)
+		(create-accessor read-write))
 	(single-slot Cantidad
 		(type INTEGER)
 		(default 20)
 ;+		(cardinality 0 1)
 		(create-accessor read-write))
-	(single-slot PosY
-		(type INTEGER)
-;+		(cardinality 0 1)
-		(create-accessor read-write))
 	(single-slot PosX
 		(type INTEGER)
+		(default 0)
 ;+		(cardinality 0 1)
 		(create-accessor read-write))
-	(single-slot IncrementoVida
+	(single-slot PosY
 		(type INTEGER)
-		(default 1)
+		(default 0)
 ;+		(cardinality 0 1)
 		(create-accessor read-write)))
