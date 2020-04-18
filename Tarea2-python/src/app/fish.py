@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, clips
+import os, re, random, clips
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 
 # Import pygame after setting env variable to hide welcome message
@@ -13,29 +13,41 @@ RESOURCES = 'res'
 RUN_MODE = False # Run mode false -> step by step running
                  # Run mode true -> autorun
 FISH_DIMENSIONS = (97, 63)
+FOOD_DIMENSIONS = (50, 50)
+FOOD_TEXT_DIMENSIONS = (FOOD_DIMENSIONS[0], FOOD_DIMENSIONS[1] + 18)
 FISH_TEXT_DIMENSIONS = (FISH_DIMENSIONS[0], FISH_DIMENSIONS[1] + 34)
+FISHBOWL_DIMENSIONS = (0, 0)
+
+FISH_COLORS = ['black', 'blue', 'green', 'purple', 'red']
+SPRITE_SHEET_FILENAME = 'cartoon_fish_06_{}_{}.png'
 
 pygame.font.init()
 
 FISH_FONT = pygame.font.Font('{}/fonts/OpenSansEmoji.ttf'.format(RESOURCES).format(RESOURCES), 14)
 DEBUG = False
 dictEmoji = {'female': '\u2640', 'male': '\u2642', 'life': '\u2665', 'strength': '\u2694', 'fight': '\u26A1', 'noBreed': '\u26D4'}
-CICLO = 0
+PASO = 0
+RELOJ = 0
+FISH_DICT = {}
+FISH_ANIMATION_DICT = {}
+FOOD = None
 
 class Fish (pygame.sprite.Sprite):
-    def __init__(self, movingSpriteSheet, idleSpriteSheet, posX, posY, life, sex, strength, hunger):
+    def __init__(self, movingSpriteSheet, idleSpriteSheet, posX, posY, life, sex, strength, hunger, canBreed):
         super(Fish, self).__init__()
         self.moving = False
-        self.movingImages = movingSpriteSheet
-        self.idleImages = idleSpriteSheet
-        self.index = 0
+        self.posX= posX
+        self.posY = posY
         self.life = life
         self.strength = strength
         self.sex = '\u2642' if sex == 'Macho' else '\u2640'
         self.hunger = hunger
-        self.image = pygame.Surface(FISH_TEXT_DIMENSIONS, pygame.SRCALPHA)
+        self.canBreed = canBreed
+
+        self.movingImages = loadSprites(movingSpriteSheet, 3, 4, 10, 11, 5, 14)
+        self.idleImages = loadSprites(idleSpriteSheet, 5, 4, 9, 9, 11, 20)
+        self.index = 0
         self.createImage()
-        self.rect = pygame.Rect(posX, posY, FISH_TEXT_DIMENSIONS[0], FISH_TEXT_DIMENSIONS[1])
 
     def changeState(self):
         self.moving = not self.moving
@@ -49,16 +61,48 @@ class Fish (pygame.sprite.Sprite):
             self.index = 0
         
         self.createImage()
+
+    def updateAttributes(self, posX, posY, life, hunger, canBreed):
+        self.posX = posX
+        self.posY = posY
+        self.life = life
+        self.hunger = hunger
+        self.canBreed = '\u26D4' if canBreed > 0 else ''
     
     def createImage(self):
+        self.rect = pygame.Rect((self.posX, self.posY), FISH_TEXT_DIMENSIONS)
+        self.image = pygame.Surface(FISH_TEXT_DIMENSIONS, pygame.SRCALPHA)
         toBlit = self.movingImages[self.index] if self.moving else self.idleImages[self.index]
         self.image.blit(toBlit, (0, 35))
-        self.image.blit(FISH_FONT.render('{} \u2665 | {} \u2668'.format(self.life, self.hunger), True, pygame.Color('white')), (0, 0))
-        self.image.blit(FISH_FONT.render('{} \u2694 | {}\u26D4\u26A1'.format(self.strength, self.sex),True, pygame.Color('white')), (0, 15))
+        self.image.blit(FISH_FONT.render('{} \u2665 | {} \u2668'.format(self.life, self.hunger), True, pygame.Color('black')), (0, 0))
+        self.image.blit(FISH_FONT.render('{} \u2694 | {}{}'.format(self.strength, self.sex, self.canBreed),True, pygame.Color('black')), (0, 15))
 
-    def move(self, posX, posY):
-        self.rect = pygame.Rect(posX, posY, FISH_TEXT_DIMENSIONS[0], FISH_TEXT_DIMENSIONS[1])
+class Food(pygame.sprite.Sprite):
+    def __init__(self, imagePath, posX, posY, units, regen):
+        super(Food, self).__init__()
+        self.baseImage = pygame.transform.scale(pygame.image.load(imagePath).convert_alpha(), FOOD_DIMENSIONS)
+        self.rect = pygame.Rect((posX, posY), FOOD_TEXT_DIMENSIONS)
+        self.updateQty(units)
+        self.regen = '\u267B {}'.format(regen)
+        self.grp = pygame.sprite.Group([self])
+
+    def updateQty(self, qty):
+        if qty > 0:
+            self.supplies = ''
+            self.units = qty
+        else:
+            if qty == 0:
+                self.units = qty
+            self.supplies = '|\u26FD'
+
+    def createImage(self):
+        self.image = pygame.Surface(FOOD_TEXT_DIMENSIONS, pygame.SRCALPHA)
+        self.image.blit(self.baseImage, (0, 19))
+        self.image.blit(FISH_FONT.render('{}|{}{}'.format(self.units, self.regen, self.supplies), True, pygame.Color('black')), (0, 0))
+
+    def draw(self, surface):
         self.createImage()
+        self.grp.draw(surface)
 
 def handleEvent(evt):
     global RUN_MODE, DEBUG
@@ -67,7 +111,9 @@ def handleEvent(evt):
         exit(0)
     elif evt.type == pygame.KEYDOWN:
         if not RUN_MODE and evt.key == pygame.K_SPACE or evt.key == pygame.K_RETURN:
-            pygame.display.flip()
+            stepCLIPS()
+            printCLIPS()
+            return True
         elif evt.key == pygame.K_d:
             DEBUG = not DEBUG
         elif evt.key == pygame.K_m:
@@ -90,33 +136,93 @@ def loadSprites(filename, nrows, ncols, marginX, paddingX,  marginY, paddingY):
 
         return spriteImages
 
+def mapCoords(posX, posY):
+    mappedX = posX / FISHBOWL_DIMENSIONS[0] * WIDTH
+    mappedY = posX / FISHBOWL_DIMENSIONS[1] * HEIGHT
+    return mappedX, mappedY
+
 def printCLIPS():
-    print('Ciclo {}'.format(CICLO))
+    print('PASO {}'.format(PASO))
     print('Instancias')
-    instance = clips.InitialInstance()
-    while (True):
-        instance = instance.Next()
-        if (not instance):
-            break
-        print(instance.PPForm())
+    print(getInstanceString())
     print('Agenda')
     clips.RefreshAgenda()
     clips.PrintAgenda()
     print()
 
+def getInstanceString():
+    instanceStr = ''
+    instance = clips.InitialInstance()
+    while (True):
+        instance = instance.Next()
+        if (not instance):
+            break
+        instanceStr += '{}\n'.format(instance.PPForm())
+    return instanceStr
+
 def loadCLIPS():
-    clips.Load('../clips/peces.pont')
-    clips.Load('../clips/peces.clp')
-    clips.Load('../clips/peces.pins')
+    clips.Load('src/clips/peces.pont')
+    clips.Load('src/clips/peces.clp')
+    clips.Load('src/clips/peces.pins')
     clips.Reset()
     clips.SendCommand('(set-salience-evaluation when-activated)')
     clips.SendCommand('(set-strategy depth)')
     printCLIPS()
+    loadFishFromCLIPS(True)
 
 def stepCLIPS():
-    global CICLO
+    global PASO
     clips.SendCommand('(run 1)')
-    CICLO += 1
+    PASO += 1
+    loadFishFromCLIPS(False)
+    printCLIPS()
+
+def loadFishFromCLIPS(initial):
+    global RELOJ, FISH_DICT, FISH_ANIMATION_DICT, FOOD, FISHBOWL_DIMENSIONS
+    instances = getInstanceString().splitlines()
+    for i in instances:
+        if 'Comida' in i:
+            qty =  int(re.search('\(Cantidad (-?\d+)\)', i).group(1))
+            if initial:
+                posX =  int(re.search('\(PosX (\d+)\)', i).group(1))
+                posY =  int(re.search('\(PosY (\d+)\)', i).group(1))
+                posX, posY = mapCoords(posX, posY)
+                lifeGain = int(re.search('\(IncrementoVida (\d+)\)', i).group(1))
+                FOOD = Food('{}/food.png'.format(RESOURCES), posX, posY, qty, lifeGain)
+            else:
+                FOOD.update(qty)
+        elif initial and 'PeceraStandard' in i:
+            bowlW = int(re.search('\(Ancho (\d+)\)', i).group(1))
+            bowlH = int(re.search('\(Alto (\d+)\)', i).group(1))
+            FISHBOWL_DIMENSIONS = (bowlW, bowlH)
+        elif 'Pez' in i:
+            posX =  int(re.search('\(PosX (\d+)\)', i).group(1))
+            posY =  int(re.search('\(PosY (\d+)\)', i).group(1))
+            hunger = int(re.search('\(Hambre (\d+)\)', i).group(1))
+            canBreed = int(re.search('\(PeriodoNoReproducirse (\d+)\)', i).group(1))
+            life = int(re.search('\(Vida (-?\d+)\)', i).group(1))
+            fishName = re.search('\[(.+)\]', i).group(1)
+            try:
+                FISH_DICT[fishName].updateAttributes(posX, posY, life, hunger, canBreed)
+            except KeyError:
+                fishColor = random.choice(FISH_COLORS)
+                sex = re.search('\(Sexo (.+)\)', i).group(1)
+                strength = int(re.search('\(Fuerza (\d+)\)', i).group(1))
+                FISH_DICT[fishName] = Fish('{}/sprites/{}'.format(RESOURCES, SPRITE_SHEET_FILENAME.format(fishColor, 'swim')),
+                                           '{}/sprites/{}'.format(RESOURCES, SPRITE_SHEET_FILENAME.format(fishColor, 'idle')),
+                                           posX, posY, life, sex, strength, hunger, canBreed)
+                FISH_ANIMATION_DICT[fishName] = pygame.sprite.Group(FISH_DICT[fishName])
+        elif 'Mundo_peces' in i:
+            RELOJ = int(re.search('\(Reloj (\d+)\)', i).group(1))
+
+def draw(screen, background, timerFont):
+    screen.blit(background, (0,0))
+    timer = timerFont.render('Reloj {}'.format(RELOJ), True, pygame.Color('white'))
+    screen.blit(timer, (WIDTH - timer.get_rect().size[0], 0))
+    FOOD.draw(screen)
+    for i in FISH_ANIMATION_DICT.values():
+        i.draw(screen)
+    pygame.display.flip()
 
 def main():
     ########### INITIALIZATIONS ##############
@@ -127,33 +233,30 @@ def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     bg = pygame.image.load('{}/background.png'.format(RESOURCES)).convert()
     background = pygame.transform.scale(bg, (WIDTH, HEIGHT))
-    font = pygame.font.Font('{}/fonts/OpenSansEmoji.ttf'.format(RESOURCES).format(RESOURCES), 30)
+    timerFont = pygame.font.Font('{}/fonts/OpenSansEmoji.ttf'.format(RESOURCES).format(RESOURCES), 30)
     clock = pygame.time.Clock()
-    idleSprites = loadSprites('{}/sprites/cartoon_fish_06_black_idle.png'.format(RESOURCES),
-                          5, 4, 9, 9, 11, 20)
-    movingSprites = loadSprites('{}/sprites/cartoon_fish_06_black_swim.png'.format(RESOURCES),
-                          3, 4, 10, 11, 5, 14)
-    f = Fish(movingSprites, idleSprites, 300, 300, 30, 'Hembra', 5, 10)
-    grupo = pygame.sprite.Group(f)
+    loadCLIPS()
+
+    draw(screen, background, timerFont)
 
     ############## MAIN LOOP #################
     while True:
-        screen.blit(background, (0,0))
-        grupo.update()
-        grupo.draw(screen)
 
         if DEBUG:
-            fps = font.render('{} FPS'.format(int(clock.get_fps())), True, pygame.Color('white'))
+            fps = timerFont.render('{} FPS'.format(int(clock.get_fps())), True, pygame.Color('white'))
             screen.blit(fps, (0, 0))
         
         if RUN_MODE:
             for event in pygame.event.get(): 
                 handleEvent(event)
             clock.tick(CLOCK_RATE)
+            stepCLIPS()
+            draw(screen, background, timerFont)
             pygame.display.update()
         else:
             clock.tick(0)
             event = pygame.event.wait()
-            handleEvent(event)
+            if handleEvent(event):
+                draw(screen, background, timerFont)
 
 main()

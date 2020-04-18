@@ -1,12 +1,12 @@
 (definstances FISH
+	([pecera_standard] of  PeceraStandard
+		(Alto 480)
+		(Ancho 640))
+
 	([fuente] of  Comida
 		(Cantidad 20)
 		(PosX 320)
 		(PosY 240))
-
-	([pecera_standard] of  PeceraStandard
-		(Alto 480)
-		(Ancho 640))
 
 	([pez_amarillo] of  Pez
 		(VidaMaxima 15)
