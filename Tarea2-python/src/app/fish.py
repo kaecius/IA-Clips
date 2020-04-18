@@ -23,13 +23,14 @@ SPRITE_SHEET_FILENAME = 'cartoon_fish_06_{}_{}.png'
 
 pygame.font.init()
 
-FISH_FONT = pygame.font.Font('{}/fonts/OpenSansEmoji.ttf'.format(RESOURCES).format(RESOURCES), 14)
+FISH_FONT = pygame.font.Font(os.path.join(RESOURCES, 'fonts', 'OpenSansEmoji.ttf'), 14)
 DEBUG = False
 dictEmoji = {'female': '\u2640', 'male': '\u2642', 'life': '\u2665', 'strength': '\u2694', 'fight': '\u26A1', 'noBreed': '\u26D4'}
 PASO = 0
 RELOJ = 0
 FISH_DICT = {}
 FISH_ANIMATION_DICT = {}
+PAIRING_FISHES = {}
 FOOD = None
 
 class Fish (pygame.sprite.Sprite):
@@ -43,15 +44,16 @@ class Fish (pygame.sprite.Sprite):
         self.sex = '\u2642' if sex == 'Macho' else '\u2640'
         self.hunger = hunger
         self.canBreed = '\u26D4' if canBreed > 0 else ''
+        self.fight = ''
 
         self.movingImages = loadSprites(movingSpriteSheet, 3, 4, 10, 11, 5, 14)
         self.idleImages = loadSprites(idleSpriteSheet, 5, 4, 9, 9, 11, 20)
         self.index = 0
         self.createImage()
 
-    def changeState(self):
-        self.moving = not self.moving
-        self.index = 0
+    def changeState(self, isFighting):
+        self.fight = '\u26A1' if isFighting else ''
+        self.createImage()
 
     def update(self):
         self.index += 1
@@ -76,7 +78,7 @@ class Fish (pygame.sprite.Sprite):
         toBlit = self.movingImages[self.index] if self.moving else self.idleImages[self.index]
         self.image.blit(toBlit, (0, 35))
         self.image.blit(FISH_FONT.render('{} \u2665 | {} \u2668'.format(self.life, self.hunger), True, pygame.Color('black')), (0, 0))
-        self.image.blit(FISH_FONT.render('{} \u2694 | {}{}'.format(self.strength, self.sex, self.canBreed),True, pygame.Color('black')), (0, 15))
+        self.image.blit(FISH_FONT.render('{} \u2694 | {}{}{}'.format(self.strength, self.sex, self.canBreed, self.fight),True, pygame.Color('black')), (0, 15))
 
 class Food(pygame.sprite.Sprite):
     def __init__(self, imagePath, posX, posY, units, regen):
@@ -103,6 +105,7 @@ class Food(pygame.sprite.Sprite):
         self.image.blit(self.baseImage, (0, 35))
         self.image.blit(FISH_FONT.render('{} {}'.format(self.units, self.supplies), True, pygame.Color('black')), (0, 0))
         self.image.blit(FISH_FONT.render('{}'.format(self.regen), True, pygame.Color('black')), (0, 15))
+
     def draw(self, surface):
         self.createImage()
         self.grp.draw(surface)
@@ -152,7 +155,7 @@ def printCLIPS():
     print('Facts')
     clips.PrintFacts()
     print('\nAgenda')
-    clips.RefreshAgenda()
+    # clips.RefreshAgenda()
     clips.PrintAgenda()
     print()
 
@@ -167,9 +170,9 @@ def getInstanceString():
     return instanceStr
 
 def loadCLIPS():
-    clips.Load('src/clips/peces.pont')
-    clips.Load('src/clips/peces.clp')
-    clips.Load('src/clips/peces.pins')
+    clips.Load(os.path.join('src', 'clips', 'peces.pont'))
+    clips.Load(os.path.join('src', 'clips', 'peces.clp'))
+    clips.Load(os.path.join('src', 'clips', 'peces.pins'))
     clips.Reset()
     clips.SendCommand('(set-salience-evaluation when-activated)')
     clips.SendCommand('(set-strategy depth)')
@@ -194,7 +197,7 @@ def loadFishFromCLIPS(initial):
                 posY =  int(re.search('\(PosY (\d+)\)', i).group(1))
                 posX, posY = mapCoords(posX, posY)
                 lifeGain = int(re.search('\(IncrementoVida (\d+)\)', i).group(1))
-                FOOD = Food('{}/food.png'.format(RESOURCES), posX, posY, qty, lifeGain)
+                FOOD = Food(os.path.join(RESOURCES, 'food.png'), posX, posY, qty, lifeGain)
             else:
                 FOOD.updateQty(qty)
         elif initial and 'PeceraStandard' in i:
@@ -215,12 +218,39 @@ def loadFishFromCLIPS(initial):
                 fishColor = random.choice(FISH_COLORS)
                 sex = re.search('\(Sexo (Hembra|Macho)\)', i).group(1)
                 strength = int(re.search('\(Fuerza (\d+)\)', i).group(1))
-                FISH_DICT[fishName] = Fish('{}/sprites/{}'.format(RESOURCES, SPRITE_SHEET_FILENAME.format(fishColor, 'swim')),
-                                           '{}/sprites/{}'.format(RESOURCES, SPRITE_SHEET_FILENAME.format(fishColor, 'idle')),
+                FISH_DICT[fishName] = Fish(os.path.join(RESOURCES, 'sprites', SPRITE_SHEET_FILENAME.format(fishColor, 'swim')),
+                                           os.path.join(RESOURCES, 'sprites', SPRITE_SHEET_FILENAME.format(fishColor, 'idle')),
                                            posX, posY, life, sex, strength, hunger, canBreed)
                 FISH_ANIMATION_DICT[fishName] = pygame.sprite.Group(FISH_DICT[fishName])
         elif 'Mundo_peces' in i:
             RELOJ = int(re.search('\(Reloj (\d+)\)', i).group(1))
+    
+    clips._clips.routerClear('temporary')
+    clips._clips.agenda('temporary')
+    for m in re.findall('MORIR: \[(.+)\],', clips._clips.routerRead('temporary')):
+        try:
+            del FISH_ANIMATION_DICT[m]
+            del FISH_DICT[m]
+        except KeyError:
+            pass
+
+    clips._clips.routerClear('temporary')
+    clips._clips.facts('temporary')
+    facts = clips._clips.routerRead('temporary')
+    for m in re.findall('\(hembra \[(.+)\] candidatos (.+)\)', facts):
+        PAIRING_FISHES[m[0]] = []
+        for j in m[1].split(' '):
+            FISH_DICT[j[1:-1]].changeState(True)
+            PAIRING_FISHES[m[0]].append(j)
+    
+    for m in re.findall('\(reproducir \[(.+)\] \[(.+)\]\)', facts):
+        try:
+            for j in PAIRING_FISHES[m[0]]:
+                FISH_DICT[j].changeState(False)
+            
+            del PAIRING_FISHES[m[1]]
+        except KeyError:
+            pass
 
 def draw(screen, background, timerFont, clock):
     screen.blit(background, (0,0))
@@ -239,13 +269,13 @@ def draw(screen, background, timerFont, clock):
 def main():
     ########### INITIALIZATIONS ##############
     pygame.init()
-    icon = pygame.image.load('{}/icon/aquarium.png'.format(RESOURCES))
+    icon = pygame.image.load(os.path.join(RESOURCES, 'icon', 'aquarium.png'))
     pygame.display.set_icon(icon)
     pygame.display.set_caption('Pecera CLIPS')
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    bg = pygame.image.load('{}/background.png'.format(RESOURCES)).convert()
+    bg = pygame.image.load(os.path.join(RESOURCES, 'background.png')).convert()
     background = pygame.transform.scale(bg, (WIDTH, HEIGHT))
-    timerFont = pygame.font.Font('{}/fonts/OpenSansEmoji.ttf'.format(RESOURCES).format(RESOURCES), 30)
+    timerFont = pygame.font.Font(os.path.join(RESOURCES, 'fonts', 'OpenSansEmoji.ttf'), 30)
     clock = pygame.time.Clock()
     loadCLIPS()
 
