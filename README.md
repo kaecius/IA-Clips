@@ -66,6 +66,15 @@ Describe y explica las funciones nuevas o que hayan cambiado con respecto al lab
 
 </details>
 
+<details>
+<summary><big><b>Pecera</b></big></summary>
+
+<br>
+
+La documentación se está realizando [aquí](https://www.overleaf.com/4457388223dxhxgyxqrdby)
+
+</details>
+
 ## Autores
 
 - [Xabier Lahuerta Vázquez](https://github.com/Xabilahu)
