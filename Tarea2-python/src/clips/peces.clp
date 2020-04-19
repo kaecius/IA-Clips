@@ -105,7 +105,6 @@
 (deffunction desplaza-a-posicion (?pez $?desplazamiento)
     (bind ?posicionX (+ (obtener-valor ?pez PosX) (nth 1 ?desplazamiento)))
     (bind ?posicionY (+ (obtener-valor ?pez PosY) (nth 2 ?desplazamiento)))
-    (bind ?hambre (obtener-valor ?pez Hambre))
     (modificar-valor ?pez PosX ?posicionX)
     (modificar-valor ?pez PosY ?posicionY)   
 )
