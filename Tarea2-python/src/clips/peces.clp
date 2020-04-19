@@ -1,4 +1,3 @@
-; (set-dynamic-constraint-checking) Validación dinámica de facets restrictivos (p.e. range, allowed-classes, allowed-values)
 ; (set-salience-evaluation when-activated) Salience dinámica
 
 (defglobal
@@ -208,7 +207,7 @@
     (nth 1 ?listaCandidatos)
 )
 
-; Esta función calcula un multiplicador aleatorio perteneciente al conjunto {0.1, 0.2, 0.3, ... , ?*MULTIPLICADOR*}.
+; Esta función calcula un multiplicador aleatorio perteneciente al conjunto {0.1, 0.2, 0.3, ... , ?*MULTIPLICADOR*, ?*MULTIPLICADOR*.1, ... , ?*MULTIPLICADOR*.9}.
 (deffunction multiplicador-caracteristica-hijo ($?x)
     (bind ?entero (random 0 ?*MULTIPLICADOR*))
     (bind ?decimal (random 0 9))
@@ -218,9 +217,9 @@
 )
 
 ; Se crea un hijo de la siguiente manera:
-;   - Se calcula un multiplicador aleatorio perteneciente al conjunto {0.1, 0.2, 0.3, ... , ?*MULTIPLICADOR*}.
+;   - Se calcula un multiplicador aleatorio perteneciente al conjunto {0.1, 0.2, 0.3, ... , ?*MULTIPLICADOR*, ?*MULTIPLICADOR*.1, ... , ?*MULTIPLICADOR*.9}.
 ;   - La VidaMaxima, Fuerza y Desplazamiento de calculan como promedio de sus progenitores, multiplicado por el multiplicador.
-;   - El sexo del hijo se decide aleatoriamente, la pobabilidad de cada sexo es 50%.
+;   - El sexo del hijo se decide aleatoriamente, la probabilidad de cada sexo es 50%.
 ;   - La posición inicial del hijo es el punto intermedio entre los progenitores.
 ;   - Los hijos no podrán pelearse ni reproducirse hasta que pasen ?*INMUNIDAD* ticks de reloj.
 ;   - Los progenitores suman ?*COSTE-REPRODUCCION* unidades de Hambre.
@@ -418,11 +417,3 @@
     => 
    (modificar-valor ?comida Cantidad ?*CANTIDAD-TRANSPORTE*)
 )
-
-;[X] que al mover les entre hambre
-;[X] sistema de sexos
-;[X] reproducción por cercanía y nivel de hambre
-;[X] Agresivo si sexo igual mientras reproduce
-;[X] Vida de los peces
-;[X] La comida restaura una cierta cantidad de vida 
-;[X] Una vez tengas 10 de hambre la vida se va reduciendo x unidades
