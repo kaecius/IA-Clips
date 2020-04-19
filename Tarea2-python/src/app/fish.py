@@ -269,6 +269,7 @@ def draw(screen, background, timerFont, clock):
 def main():
     ########### INITIALIZATIONS ##############
     pygame.init()
+    pygame.mixer.quit()
     icon = pygame.image.load(os.path.join(RESOURCES, 'icon', 'aquarium.png'))
     pygame.display.set_icon(icon)
     pygame.display.set_caption('Pecera CLIPS')
@@ -292,7 +293,7 @@ def main():
             draw(screen, background, timerFont, clock)
             pygame.display.update()
         else:
-            clock.tick(0)
+            clock.tick()
             event = pygame.event.wait()
             if handleEvent(event):
                 draw(screen, background, timerFont, clock)
